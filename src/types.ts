@@ -4,110 +4,110 @@ import { TFile } from "obsidian";
  * Core task information structure
  */
 export interface TaskInfo {
-	/** File path of the task note */
-	path: string;
+  /** File path of the task note */
+  path: string;
 
-	/** Task title (from filename or frontmatter) */
-	title: string;
+  /** Task title (from filename or frontmatter) */
+  title: string;
 
-	/** Completion status */
-	complete: boolean;
+  /** Completion status */
+  complete: boolean;
 
-	/** Due date in YYYY-MM-DD format */
-	due: string | null;
+  /** Due date in YYYY-MM-DD format */
+  due: string | null;
 
-	/** Associated projects as wikilinks */
-	projects: string[];
+  /** Associated projects as wikilinks */
+  projects: string[];
 
-	/** Tags for categorization (always includes 'task') */
-	tags: string[];
+  /** Tags for categorization (always includes 'task') */
+  tags: string[];
 
-	/** Free-text status description */
-	statusDescription: string;
+  /** Free-text status description */
+  statusDescription: string;
 
-	/** Reference to the Obsidian TFile object */
-	file?: TFile;
+  /** Reference to the Obsidian TFile object */
+  file?: TFile;
 }
 
 /**
  * Data structure for creating a new task
  */
 export interface TaskCreationData {
-	/** Task title */
-	title: string;
+  /** Task title */
+  title: string;
 
-	/** Completion status (default: false) */
-	complete?: boolean;
+  /** Completion status (default: false) */
+  complete?: boolean;
 
-	/** Due date in YYYY-MM-DD format */
-	due?: string | null;
+  /** Due date in YYYY-MM-DD format */
+  due?: string | null;
 
-	/** Associated projects as wikilinks */
-	projects?: string[];
+  /** Associated projects as wikilinks */
+  projects?: string[];
 
-	/** Tags (always includes 'task') */
-	tags?: string[];
+  /** Tags (always includes 'task') */
+  tags?: string[];
 
-	/** Free-text status description */
-	statusDescription?: string;
+  /** Free-text status description */
+  statusDescription?: string;
 }
 
 /**
  * Plugin settings interface
  */
 export interface LightweightTasksSettings {
-	/** Folder path for task notes */
-	taskFolder: string;
+  /** Folder path for task notes */
+  taskFolder: string;
 
-	/** Folder path for meeting notes */
-	meetingFolder: string;
+  /** Folder path for meeting notes */
+  meetingFolder: string;
 
-	/** Outlook calendar ICS feed URL */
-	calendarURL: string;
+  /** Outlook calendar ICS feed URL */
+  calendarURL: string;
 
-	/** Default tags to add to new tasks */
-	defaultTags: string[];
+  /** Default tags to add to new tasks */
+  defaultTags: string[];
 
-	/** Enable natural language date parsing */
-	enableNaturalLanguageDates: boolean;
+  /** Enable natural language date parsing */
+  enableNaturalLanguageDates: boolean;
 
-	/** Show convert button at end of checkbox lines */
-	showConvertButton: boolean;
+  /** Show convert button at end of checkbox lines */
+  showConvertButton: boolean;
 
-	/** Enable HTTP API for MCP integration */
-	enableHTTPAPI: boolean;
+  /** Enable HTTP API for MCP integration */
+  enableHTTPAPI: boolean;
 
-	/** HTTP API port */
-	apiPort: number;
+  /** HTTP API port */
+  apiPort: number;
 
-	/** API key for authentication */
-	apiKey: string;
+  /** API key for authentication */
+  apiKey: string;
 }
 
 /**
  * Event data for task updates
  */
 export interface TaskUpdatedEvent {
-	file: TFile;
-	task: TaskInfo;
-	changes?: Partial<TaskInfo>;
+  file: TFile;
+  task: TaskInfo;
+  changes?: Partial<TaskInfo>;
 }
 
 /**
  * Calendar event from ICS feed
  */
 export interface CalendarEvent {
-	/** Event title/summary */
-	title: string;
+  /** Event title/summary */
+  title: string;
 
-	/** Start time */
-	start: Date;
+  /** Start time */
+  start: Date;
 
-	/** End time */
-	end: Date;
+  /** End time */
+  end: Date;
 
-	/** Is all-day event */
-	allDay: boolean;
+  /** Is all-day event */
+  allDay: boolean;
 }
 
 // Event constants
