@@ -38,10 +38,10 @@ npm run format:check
 
 ## Project Status
 
-**Current Phase**: Phase 1 Complete ✅
+**Current Phase**: Phase 2 Complete ✅
 
 - ✅ Phase 1: Project Setup (COMPLETE)
-- ⏳ Phase 2: Core Infrastructure (TaskManager, TaskService, FieldMapper)
+- ✅ Phase 2: Core Infrastructure (COMPLETE)
 - ⏳ Phase 3: Calendar Integration
 - ⏳ Phase 4: Inline Task Conversion
 - ⏳ Phase 5: Bases Integration
@@ -81,7 +81,13 @@ This plugin is built from scratch with only essential features:
 
 ## Key Files
 
-- [src/main.ts](src/main.ts) - Plugin entry point (~45 lines currently)
+### Phase 2 Core Services
+- [src/utils/TaskManager.ts](src/utils/TaskManager.ts) - JIT data access layer (~291 lines)
+- [src/services/TaskService.ts](src/services/TaskService.ts) - CRUD operations (~274 lines)
+- [src/services/FieldMapper.ts](src/services/FieldMapper.ts) - Property mapping (~190 lines)
+
+### Plugin Infrastructure
+- [src/main.ts](src/main.ts) - Plugin entry point with service initialization (~60 lines)
 - [src/types.ts](src/types.ts) - Core type definitions
 - [src/settings/SettingTab.ts](src/settings/SettingTab.ts) - Settings UI
 - [src/settings/defaults.ts](src/settings/defaults.ts) - Default configuration
@@ -110,12 +116,67 @@ statusDescription: ""   # Free text
 ## Code Size Budget
 
 - **Target**: 4,500 lines total
-- **Current**: ~550 lines (Phase 1 complete)
-- **Remaining**: 3,950 lines for Phases 2-7
+- **Current**: ~1,099 lines (Phase 1 + Phase 2 complete)
+  - Phase 1: ~284 lines (types, settings, UI)
+  - Phase 2: ~815 lines (TaskManager, TaskService, FieldMapper)
+- **Remaining**: ~3,401 lines for Phases 3-7
+
+## Phase 2 Implementation Details
+
+### TaskManager (src/utils/TaskManager.ts)
+- **Purpose**: Just-In-Time data access layer for reading task information
+- **Design**: Synchronous queries from Obsidian's MetadataCache (no async overhead)
+- **Key Methods**:
+  - `getAllTasks()` - Get all tasks in vault
+  - `getTaskInfo(path)` - Get single task info
+  - `getTasksForDate(date)` - Filter by due date
+  - `getTasksDueInRange(start, end)` - Date range queries
+  - `getIncompleteTasks()`, `getCompleteTasks()`, `getOverdueTasks()`
+  - `getTasksForProject()`, `getTasksWithTag()`
+- **Architecture**: Extends EventEmitter for event-driven patterns
+- **No Internal Caching**: All queries read fresh from metadata cache
+
+### TaskService (src/services/TaskService.ts)
+- **Purpose**: CRUD operations and file management
+- **Key Methods**:
+  - `createTask(data)` - Create new task file with frontmatter
+  - `updateTask(path, updates)` - Modify task properties
+  - `deleteTask(path)` - Delete task file
+  - `updateTaskStatus()`, `updateTaskProjects()`, `updateTaskDueDate()` - Convenience methods
+- **Filename Handling**:
+  - Sanitizes forbidden characters: [#^|] → `-`, * → `-`, " → `'`, etc.
+  - Handles Windows reserved names (CON, PRN, AUX, NUL, COM1-9, LPT1-9)
+  - Enforces max 200 character limit
+  - Generates unique filenames with counter suffix
+- **Frontmatter Management**: Uses YAML library for parsing/generation
+- **Error Handling**: Proper try/catch with user-facing notices
+
+### FieldMapper (src/services/FieldMapper.ts)
+- **Purpose**: Property mapping between TaskInfo and frontmatter
+- **Key Methods**:
+  - `mapTaskInfoToFrontmatter(task)` - Convert to frontmatter format
+  - `mapFrontmatterToTaskInfo(frontmatter, path)` - Parse to TaskInfo
+  - `validateTaskFrontmatter(frontmatter)` - Validate structure and types
+  - `createDefaultFrontmatter(partial)` - Create with defaults
+- **Validation Rules**:
+  - Must have `task` tag in tags array
+  - `complete`: boolean only
+  - `due`: YYYY-MM-DD date string or null
+  - `projects`: array of wikilinks ([[Name]] format)
+  - `tags`: string array (always includes "task")
+  - `statusDescription`: any string
 
 ## Testing
 
 Tests will be added in Phase 7. Use manual testing during development.
+
+**Verification Steps for Phase 2**:
+1. Create task files with proper frontmatter
+2. Use TaskService to create/update/delete tasks
+3. Verify frontmatter is preserved on updates
+4. Check event emissions (EVENT_TASK_CREATED, etc.)
+5. Test filename sanitization with special characters
+6. Verify Windows reserved name handling
 
 ## Important Notes
 
