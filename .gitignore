@@ -1,0 +1,27 @@
+# Dependency directories
+node_modules/
+
+# Build outputs
+main.js
+main.js.map
+*.css
+*.css.map
+
+# Environment files
+.env
+.env.local
+
+# Development
+.copy-files.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
