@@ -18,8 +18,9 @@ export class TaskConversionService {
 	private nlpParser: NaturalLanguageParser;
 
 	constructor(private plugin: LightweightTasksPlugin) {
-		this.taskService = plugin.taskService;
-		this.nlpParser = plugin.nlpParser;
+		// Lazy-load services from container
+		this.taskService = plugin.getService('taskService');
+		this.nlpParser = plugin.getService('nlpParser');
 	}
 
 	/**

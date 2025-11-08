@@ -32,6 +32,8 @@ const context = await esbuild.context({
 		"@lezer/common",
 		"@lezer/highlight",
 		"@lezer/lr",
+		// Note: ical.js and chrono-node must be bundled, not externalized
+		// Dynamic imports in Obsidian only work with bundled code
 		...builtins
 	],
 	format: "cjs",
@@ -41,11 +43,40 @@ const context = await esbuild.context({
 	treeShaking: true,
 	outfile: "main.js",
 	minify: prod,
+	metafile: true,
 });
 
 if (watch) {
 	await context.watch();
 } else {
-	await context.rebuild();
+	const result = await context.rebuild();
+
+	// Write metafile for bundle analysis
+	if (result.metafile) {
+		const fs = await import('fs');
+		fs.writeFileSync('meta.json', JSON.stringify(result.metafile));
+
+		// Calculate and display bundle sizes
+		const outputs = result.metafile.outputs;
+		console.log('\n📦 Bundle Analysis:');
+		for (const [file, output] of Object.entries(outputs)) {
+			const sizeKB = (output.bytes / 1024).toFixed(2);
+			console.log(`  ${file}: ${sizeKB} KB`);
+
+			if (output.inputs) {
+				const sortedInputs = Object.entries(output.inputs)
+					.map(([path, info]) => ({ path, bytes: info.bytesInOutput }))
+					.sort((a, b) => b.bytes - a.bytes)
+					.slice(0, 10);
+
+				console.log('  Top 10 largest dependencies:');
+				sortedInputs.forEach(({ path, bytes }) => {
+					const kb = (bytes / 1024).toFixed(2);
+					console.log(`    ${kb} KB - ${path}`);
+				});
+			}
+		}
+	}
+
 	process.exit(0);
 }

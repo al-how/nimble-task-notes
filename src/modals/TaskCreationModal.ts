@@ -26,7 +26,8 @@ export class TaskCreationModal extends Modal {
 	) {
 		super(app);
 		this.taskData = data;
-		this.nlpParser = plugin.nlpParser;
+		// Lazy-load NLP parser from service container
+		this.nlpParser = plugin.getService('nlpParser');
 	}
 
 	onOpen(): void {

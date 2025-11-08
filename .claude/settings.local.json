@@ -12,7 +12,9 @@
       "Bash(printf:*)",
       "Bash(ICSSubscriptionService.ts)",
       "Bash(CalendarImportService.ts)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npm install:*)",
+      "Skill(obsidian-plugin-builder)"
     ],
     "deny": [],
     "ask": []

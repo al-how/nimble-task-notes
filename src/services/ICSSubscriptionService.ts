@@ -1,7 +1,9 @@
 import { Notice, Plugin, requestUrl } from 'obsidian';
-import ICAL from 'ical.js';
 import { ICSEvent, ICSCache, LightweightTasksSettings } from '../types';
 import { EventEmitter } from '../utils/EventEmitter';
+
+// Type for ical.js module (imported dynamically)
+type ICALModule = typeof import('ical.js');
 
 /**
  * ICSSubscriptionService: Calendar feed fetching and caching
@@ -16,6 +18,7 @@ import { EventEmitter } from '../utils/EventEmitter';
  * - Timezone handling via VTIMEZONE registration
  * - All-day event detection (date-only format)
  * - Basic RRULE expansion (1-year lookahead, max 100 instances)
+ * - Lazy-loads ical.js library (~77KB) only when needed
  */
 export class ICSSubscriptionService extends EventEmitter {
   private plugin: Plugin;
@@ -24,6 +27,8 @@ export class ICSSubscriptionService extends EventEmitter {
   private refreshTimer: number | null = null;
   private readonly CACHE_EXPIRATION = 15 * 60 * 1000;
   private readonly CACHE_GRACE_PERIOD = 5 * 60 * 1000;
+  private icalPromise: Promise<ICALModule> | null = null;
+  private icalLoadFailed = false;
 
   constructor(plugin: Plugin, settings: LightweightTasksSettings) {
     super();
@@ -31,11 +36,40 @@ export class ICSSubscriptionService extends EventEmitter {
     this.settings = settings;
   }
 
+  /**
+   * Lazy-load ical.js library.
+   * Only loads when first calendar fetch is attempted.
+   */
+  private async getICAL(): Promise<ICALModule | null> {
+    if (this.icalLoadFailed) {
+      return null;
+    }
+
+    if (this.icalPromise) {
+      return this.icalPromise;
+    }
+
+    console.log('ICSSubscriptionService: Lazy-loading ical.js...');
+    this.icalPromise = import('ical.js').catch((error) => {
+      console.error('Failed to load ical.js:', error);
+      this.icalLoadFailed = true;
+      new Notice('Calendar library failed to load');
+      return null as any;
+    });
+
+    const module = await this.icalPromise;
+    if (module) {
+      console.log('ICSSubscriptionService: ical.js loaded successfully');
+    }
+    return module;
+  }
+
   async initialize(): Promise<void> {
     if (!this.settings.calendarURL) {
       console.log('ICSSubscriptionService: No calendar URL configured');
       return;
     }
+    // Fetch immediately on initialization
     await this.fetchSubscription();
     this.startRefreshTimer();
   }
@@ -51,7 +85,7 @@ export class ICSSubscriptionService extends EventEmitter {
         method: 'GET',
         headers: { Accept: 'text/calendar,*/*;q=0.1' },
       });
-      const events = this.parseICS(response.text);
+      const events = await this.parseICS(response.text); // Now async
       this.cache = {
         subscriptionId: 'default',
         events,
@@ -78,18 +112,25 @@ export class ICSSubscriptionService extends EventEmitter {
   /**
    * Parse ICS data into ICSEvent objects
    */
-  private parseICS(icsData: string): ICSEvent[] {
+  private async parseICS(icsData: string): Promise<ICSEvent[]> {
+    const ICAL = await this.getICAL();
+    if (!ICAL) {
+      throw new Error('ical.js library not available');
+    }
+
     try {
-      const jcalData = ICAL.parse(icsData);
-      const comp = new ICAL.Component(jcalData);
+      // ical.js default export contains the API
+      const icalApi = (ICAL as any).default || ICAL;
+      const jcalData = icalApi.parse(icsData);
+      const comp = new icalApi.Component(jcalData);
       const vtimezones = comp.getAllSubcomponents('vtimezone');
-      vtimezones.forEach((vtz: ICAL.Component) => {
-        (ICAL as any).TimezoneService.register(vtz);
+      vtimezones.forEach((vtz: any) => {
+        icalApi.TimezoneService.register(vtz);
       });
       const events: ICSEvent[] = [];
-      comp.getAllSubcomponents('vevent').forEach((vevent: ICAL.Component) => {
+      comp.getAllSubcomponents('vevent').forEach((vevent: any) => {
         try {
-          const event = new ICAL.Event(vevent);
+          const event = new icalApi.Event(vevent);
           const start = event.startDate;
           if (!start) return;
 
@@ -107,7 +148,7 @@ export class ICSSubscriptionService extends EventEmitter {
           // Handle recurring events
           if (event.isRecurring()) {
             const iterator = event.iterator(start);
-            const maxDate = ICAL.Time.fromJSDate(
+            const maxDate = icalApi.Time.fromJSDate(
               new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
             );
 
@@ -156,7 +197,7 @@ export class ICSSubscriptionService extends EventEmitter {
    * For all-day events, returns date-only string (YYYY-MM-DD).
    * For timed events, uses toUnixTime() which correctly handles all timezones.
    */
-  private icalTimeToISOString(icalTime: ICAL.Time): string {
+  private icalTimeToISOString(icalTime: any): string {
     if (icalTime.isDate) {
       const year = icalTime.year.toString().padStart(4, '0');
       const month = icalTime.month.toString().padStart(2, '0');

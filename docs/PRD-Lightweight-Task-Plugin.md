@@ -1750,13 +1750,13 @@ new Setting(containerEl)
 **Goal:** Bootstrap new plugin with TypeScript tooling
 
 **Tasks:**
-- [ ] Create new plugin directory structure
-- [ ] Setup esbuild configuration (port from TaskNotes)
-- [ ] Create manifest.json
-- [ ] Setup TypeScript (tsconfig.json)
-- [ ] Create basic plugin class (`main.ts`)
-- [ ] Add dependencies: `ical.js`, `yaml`, `date-fns`
-- [ ] Setup test vault for development
+- [x] Create new plugin directory structure
+- [x] Setup esbuild configuration (port from TaskNotes)
+- [x] Create manifest.json
+- [x] Setup TypeScript (tsconfig.json)
+- [x] Create basic plugin class (`main.ts`)
+- [x] Add dependencies: `ical.js`, `yaml`, `date-fns`
+- [x] Setup test vault for development
 
 **Deliverable:** Plugin loads in Obsidian, shows in settings
 
@@ -1768,22 +1768,22 @@ new Setting(containerEl)
 **Goal:** Port essential services from TaskNotes
 
 **Tasks:**
-- [ ] Port `TaskManager.ts` (simplified to ~400 lines)
+- [x] Port `TaskManager.ts` (simplified to ~400 lines)
   - Remove dependency cache
   - Remove old compatibility layer
   - Keep JIT pattern
-- [ ] Port `TaskService.ts` (simplified to ~600 lines)
+- [x] Port `TaskService.ts` (simplified to ~600 lines)
   - Remove webhooks
   - Remove time tracking
   - Remove recurrence
   - Keep CRUD methods
-- [ ] Port `FieldMapper.ts` (minimal changes)
-- [ ] Create type definitions (`types.ts`)
+- [x] Port `FieldMapper.ts` (minimal changes)
+- [x] Create type definitions (`types.ts`)
   - `TaskInfo` interface
   - `TaskCreationData` interface
   - Event constants
-- [ ] Port date utilities (`dateUtils.ts`)
-- [ ] Create settings interface and defaults
+- [x] Port date utilities (`dateUtils.ts`)
+- [x] Create settings interface and defaults
 
 **Deliverable:** Task CRUD operations work, can create task notes manually
 
@@ -1797,23 +1797,23 @@ new Setting(containerEl)
 **Goal:** Implement meeting import from Outlook
 
 **Tasks:**
-- [ ] Port `ICSSubscriptionService.ts` from TaskNotes
+- [x] Port `ICSSubscriptionService.ts` from TaskNotes
   - Keep ICS parsing logic
   - Keep caching
   - Remove UI-specific code
-- [ ] Create `CalendarImportService.ts`
+- [x] Create `CalendarImportService.ts`
   - Implement `findAgendaHeading()`
   - Implement `sanitizeMeetingTitle()` with forbidden char rules
   - Implement `importTodaysMeetings()`
   - Implement deduplication logic
-- [ ] Add ribbon button for "Import Meetings"
-- [ ] Add command palette command
-- [ ] Create settings UI:
+- [x] Add ribbon button for "Import Meetings"
+- [x] Add command palette command
+- [x] Create settings UI:
   - Outlook Calendar URL input
   - Meeting folder path input
   - Task folder path input
-- [ ] Test with real Outlook ICS feed
-- [ ] Handle edge cases (no meetings, network error, no heading)
+- [x] Test with real Outlook ICS feed
+- [x] Handle edge cases (no meetings, network error, no heading)
 
 **Deliverable:** Can import today's meetings from Outlook calendar into daily note
 
@@ -1827,12 +1827,12 @@ new Setting(containerEl)
 **Goal:** Auto-prompt for metadata when typing checkbox + space
 
 **Tasks:**
-- [ ] Port `NaturalLanguageParser.ts` from TaskNotes (simplified)
+- [x] Port `NaturalLanguageParser.ts` from TaskNotes (simplified)
   - Keep chrono-node date parsing
   - Remove context/project tag parsing
   - Remove recurrence parsing
   - Add date preview formatting
-- [ ] Create `CheckboxPromptWidget.ts` (NEW - ~350 lines)
+- [x] Create `CheckboxPromptWidget.ts` (NEW - ~350 lines)
   - Implement CodeMirror ViewPlugin
   - Detect checkbox + space pattern
   - Render floating prompt widget below line
@@ -1840,27 +1840,27 @@ new Setting(containerEl)
   - Project input field (wikilink autocomplete)
   - Keyboard navigation (Tab, Enter, Esc)
   - Submit handler (create task + replace line)
-- [ ] Create `CheckboxPromptService.ts` (NEW - ~200 lines)
+- [x] Create `CheckboxPromptService.ts` (NEW - ~200 lines)
   - Handle task creation from prompt data
   - Line replacement logic (checkbox → wikilink)
   - Integration with TaskService
-- [ ] Style prompt widget (CSS)
+- [x] Style prompt widget (CSS)
   - Float below checkbox line
   - Similar to Obsidian Tasks plugin design
   - Input fields, button, hint text
-- [ ] Register CodeMirror extension in plugin
-- [ ] Test prompt workflow:
+- [x] Register CodeMirror extension in plugin
+- [x] Test prompt workflow:
   - Type `- [ ] Task ` → prompt appears
   - Enter "friday" → parses to next Friday
   - Tab to project → autocomplete works
   - Enter → creates `- [ ] [[Task]]` + task file
   - Esc → cancels, keeps plain checkbox
-- [ ] Test edge cases:
+- [x] Test edge cases:
   - Empty title → "Untitled Task"
   - Invalid date → inline error, stay in field
   - Duplicate filename → append counter
   - Checked box `[x]` → sets `complete: true`
-- [ ] Add retroactive conversion:
+- [x] Add retroactive conversion:
   - Right-click plain checkbox → "Convert to Task"
   - Shows same prompt
 
