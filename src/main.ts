@@ -7,6 +7,8 @@ import { TaskService } from "./services/TaskService";
 import { FieldMapper } from "./services/FieldMapper";
 import { ICSSubscriptionService } from "./services/ICSSubscriptionService";
 import { CalendarImportService } from "./services/CalendarImportService";
+import { NaturalLanguageParser } from "./services/NaturalLanguageParser";
+import { TaskConversionService } from "./services/TaskConversionService";
 
 export default class LightweightTasksPlugin extends Plugin {
   settings: LightweightTasksSettings;
@@ -19,6 +21,10 @@ export default class LightweightTasksPlugin extends Plugin {
   // Calendar services (Phase 3)
   icsService: ICSSubscriptionService;
   calendarImportService: CalendarImportService;
+
+  // Task conversion services (Phase 4)
+  nlpParser: NaturalLanguageParser;
+  taskConversionService: TaskConversionService;
 
   async onload() {
     console.log("Loading Lightweight Task Manager plugin");
@@ -40,6 +46,10 @@ export default class LightweightTasksPlugin extends Plugin {
       this.settings,
     );
 
+    // Initialize task conversion services (Phase 4)
+    this.nlpParser = new NaturalLanguageParser();
+    this.taskConversionService = new TaskConversionService(this);
+
     // Add settings tab
     this.addSettingTab(new LightweightTasksSettingTab(this.app, this));
 
@@ -54,17 +64,17 @@ export default class LightweightTasksPlugin extends Plugin {
       await this.calendarImportService.importTodaysMeetings(activeFile);
     });
 
-    // Add command for converting checkbox to task (placeholder for Phase 4)
+    // Add command for converting checkbox to task (Phase 4)
     this.addCommand({
       id: "convert-to-task",
       name: "Convert checkbox to task",
-      editorCallback: (editor) => {
-        console.log("Convert to task - not yet implemented (Phase 4)");
+      editorCallback: async (editor) => {
+        await this.taskConversionService.convertCheckboxToTask(editor);
       },
     });
 
     console.log("Lightweight Task Manager plugin loaded successfully");
-    console.log("Phase 3 complete: Calendar integration enabled");
+    console.log("Phase 4 complete: Inline task conversion enabled");
   }
 
   onunload() {

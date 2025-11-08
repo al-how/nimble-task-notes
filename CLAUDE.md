@@ -38,12 +38,12 @@ npm run format:check
 
 ## Project Status
 
-**Current Phase**: Phase 3 Complete ✅
+**Current Phase**: Phase 4 Complete ✅
 
 - ✅ Phase 1: Project Setup (COMPLETE)
 - ✅ Phase 2: Core Infrastructure (COMPLETE)
 - ✅ Phase 3: Calendar Integration (COMPLETE)
-- ⏳ Phase 4: Inline Task Conversion
+- ✅ Phase 4: Inline Task Conversion (COMPLETE)
 - ⏳ Phase 5: Bases Integration
 - ⏳ Phase 6: MCP Server
 - ⏳ Phase 7: Testing & Polish
@@ -86,9 +86,19 @@ This plugin is built from scratch with only essential features:
 - [src/services/TaskService.ts](src/services/TaskService.ts) - CRUD operations (~274 lines)
 - [src/services/FieldMapper.ts](src/services/FieldMapper.ts) - Property mapping (~190 lines)
 
+### Phase 3 Calendar Services
+- [src/services/ICSSubscriptionService.ts](src/services/ICSSubscriptionService.ts) - Calendar event fetching (~208 lines)
+- [src/services/CalendarImportService.ts](src/services/CalendarImportService.ts) - Meeting import (~194 lines)
+- [src/utils/EventEmitter.ts](src/utils/EventEmitter.ts) - Event-driven pub/sub (~41 lines)
+
+### Phase 4 Task Conversion Services
+- [src/services/NaturalLanguageParser.ts](src/services/NaturalLanguageParser.ts) - Date parsing with chrono-node (~147 lines)
+- [src/modals/TaskCreationModal.ts](src/modals/TaskCreationModal.ts) - Task metadata input modal (~280 lines)
+- [src/services/TaskConversionService.ts](src/services/TaskConversionService.ts) - Checkbox-to-task conversion (~235 lines)
+
 ### Plugin Infrastructure
-- [src/main.ts](src/main.ts) - Plugin entry point with service initialization (~60 lines)
-- [src/types.ts](src/types.ts) - Core type definitions
+- [src/main.ts](src/main.ts) - Plugin entry point with service initialization (~90 lines)
+- [src/types.ts](src/types.ts) - Core type definitions (~174 lines)
 - [src/settings/SettingTab.ts](src/settings/SettingTab.ts) - Settings UI
 - [src/settings/defaults.ts](src/settings/defaults.ts) - Default configuration
 - [docs/PRD-Lightweight-Task-Plugin.md](docs/PRD-Lightweight-Task-Plugin.md) - Full requirements
@@ -116,11 +126,12 @@ statusDescription: ""   # Free text
 ## Code Size Budget
 
 - **Target**: 4,500 lines total
-- **Current**: ~1,594 lines (Phase 1 + Phase 2 + Phase 3 complete)
+- **Current**: ~2,344 lines (Phase 1-4 complete)
   - Phase 1: ~284 lines (types, settings, UI)
   - Phase 2: ~815 lines (TaskManager, TaskService, FieldMapper)
   - Phase 3: ~443 lines (ICSSubscriptionService, CalendarImportService, EventEmitter)
-- **Remaining**: ~2,906 lines for Phases 4-7
+  - Phase 4: ~802 lines (NaturalLanguageParser, TaskCreationModal, TaskConversionService)
+- **Remaining**: ~2,156 lines for Phases 5-7
 
 ## Phase 3 Implementation Details
 
@@ -198,6 +209,64 @@ statusDescription: ""   # Free text
   - `tags`: string array (always includes "task")
   - `statusDescription`: any string
 
+## Phase 4 Implementation Details
+
+### NaturalLanguageParser (src/services/NaturalLanguageParser.ts)
+- **Purpose**: Parse natural language date expressions using chrono-node
+- **Design**: Lazy loading pattern to reduce initial bundle size (~100KB saved)
+- **Key Methods**:
+  - `parseDate(input)` - Parse natural language or YYYY-MM-DD dates
+  - `formatDatePreview(input)` - Format as "📅 Fri, Nov 8, 2025"
+  - `formatDateForFrontmatter(date)` - Convert Date to YYYY-MM-DD
+  - `parseDateStrict(input)` - Fallback YYYY-MM-DD parser
+- **Natural Language Examples**: "friday", "tomorrow", "nov 15", "in 2 weeks", "next monday"
+- **Fallback Behavior**: If chrono-node fails to load, falls back to strict YYYY-MM-DD parsing
+- **Error Handling**: Returns null for invalid dates, shows notice if chrono fails to load
+
+### TaskCreationModal (src/modals/TaskCreationModal.ts)
+- **Purpose**: Modal UI for gathering task metadata during conversion
+- **Architecture**: Extends Obsidian's Modal class (not CodeMirror widget per PRD 2.2)
+- **Form Fields**:
+  - Due date input (auto-focused, with live preview)
+  - Project input (comma-separated wikilinks, auto-wraps in [[]])
+- **Live Date Preview**: Updates as user types, shows formatted preview below input
+- **Keyboard Navigation**:
+  - Tab: Move to next field
+  - Shift+Tab: Move to previous field
+  - Enter: Submit form from any field
+  - Esc: Cancel and close modal
+- **Project Parsing**: Accepts "Project A, Project B" or "[[Project A]], [[Project B]]"
+- **Error Display**: Shows inline error for invalid date input, keeps modal open
+- **Promise-Based**: `waitForResult()` returns Promise<TaskCreationModalResult | null>
+
+### TaskConversionService (src/services/TaskConversionService.ts)
+- **Purpose**: Orchestrate checkbox-to-task conversion workflow
+- **Main Entry Point**: `convertCheckboxToTask(editor, lineNumber)`
+- **Conversion Flow**:
+  1. Extract checkbox data from line (pattern: `- [x] Title`)
+  2. Validate line is a checkbox (not already a wikilink)
+  3. Show TaskCreationModal to gather metadata
+  4. Create task file via TaskService
+  5. Replace editor line with wikilink using transaction
+  6. Show success notice
+- **Key Methods**:
+  - `extractCheckboxData(line)` - Parse checkbox pattern with regex
+  - `showTaskCreationModal(data)` - Display modal and wait for result
+  - `createTaskFromModal(checkboxData, modalResult)` - Build TaskCreationData and create file
+  - `replaceLineWithWikilink(editor, lineNumber, data, title)` - Use editor.transaction() for undo support
+- **Edge Cases Handled**:
+  - Empty title → "Untitled Task"
+  - Line already has wikilink → show notice, don't convert
+  - User cancels modal → keep original checkbox
+  - Task creation fails → show error, don't modify line
+- **Undo/Redo**: Uses `editor.transaction()` for proper undo stack integration
+- **Checkbox Status Preservation**: `[x]` → `- [x] [[Task]]`, `[ ]` → `- [ ] [[Task]]`
+
+### Integration in main.ts
+- **Services Initialized**: NaturalLanguageParser, TaskConversionService
+- **Command Added**: "Convert checkbox to task" with Ctrl+Enter (Cmd+Enter on Mac) hotkey
+- **Command Callback**: Calls `taskConversionService.convertCheckboxToTask(editor)`
+
 ## Testing
 
 Tests will be added in Phase 7. Use manual testing during development.
@@ -209,6 +278,22 @@ Tests will be added in Phase 7. Use manual testing during development.
 4. Check event emissions (EVENT_TASK_CREATED, etc.)
 5. Test filename sanitization with special characters
 6. Verify Windows reserved name handling
+
+**Verification Steps for Phase 4**:
+1. Type `- [ ] Test task` in any note
+2. Press Ctrl+Enter (Cmd+Enter on Mac) → modal opens
+3. Enter "friday" in due date → preview shows next Friday's date
+4. Tab to project field → enter "Project A, Project B"
+5. Press Enter → task file created, line becomes `- [ ] [[Test task]]`
+6. Verify task file has correct frontmatter (due date, projects as wikilinks)
+7. Test with checked box: `- [x] Done task` → preserves [x] status
+8. Test empty title: `- [ ]` → uses "Untitled Task"
+9. Test cancel (Esc) → modal closes, checkbox unchanged
+10. Test undo (Ctrl+Z) → line reverts to original checkbox
+11. Test with existing wikilink: `- [ ] [[Existing]]` → shows notice "Already a task"
+12. Test invalid date: enter "asdfasdf" → shows error, modal stays open
+13. Test special characters in title: `Task: with <symbols> & #tags`
+14. Test natural language dates: "tomorrow", "nov 15", "in 2 weeks"
 
 ## Important Notes
 

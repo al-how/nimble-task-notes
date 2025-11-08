@@ -136,6 +136,37 @@ export interface ICSCache {
   expires: string;
 }
 
+/**
+ * Checkbox data extracted from editor line
+ */
+export interface CheckboxData {
+	/** Indentation before checkbox (spaces/tabs) */
+	indent: string;
+
+	/** Checkbox status: ' ' | 'x' | 'X' */
+	status: string;
+
+	/** Task title text after checkbox */
+	title: string;
+
+	/** Whether checkbox is checked */
+	complete: boolean;
+}
+
+/**
+ * Result from task creation modal
+ */
+export interface TaskCreationModalResult {
+	/** Parsed due date or null */
+	dueDate: Date | null;
+
+	/** Array of project wikilinks */
+	projects: string[];
+
+	/** Additional tags beyond default */
+	additionalTags: string[];
+}
+
 // Event constants
 export const EVENT_TASK_UPDATED = "lightweight-tasks:task-updated";
 export const EVENT_TASK_CREATED = "lightweight-tasks:task-created";
