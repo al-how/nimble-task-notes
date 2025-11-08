@@ -8,7 +8,11 @@
       "Bash(cat:*)",
       "Bash(npm run dev:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(printf:*)",
+      "Bash(ICSSubscriptionService.ts)",
+      "Bash(CalendarImportService.ts)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

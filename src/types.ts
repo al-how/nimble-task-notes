@@ -94,20 +94,46 @@ export interface TaskUpdatedEvent {
 }
 
 /**
- * Calendar event from ICS feed
+ * Calendar event from ICS feed (parsed)
  */
-export interface CalendarEvent {
+export interface ICSEvent {
+  /** Unique event ID */
+  id: string;
+
   /** Event title/summary */
   title: string;
 
-  /** Start time */
-  start: Date;
+  /** Start time as ISO string or YYYY-MM-DD for all-day */
+  start: string;
 
-  /** End time */
-  end: Date;
+  /** End time as ISO string or YYYY-MM-DD for all-day */
+  end?: string;
 
   /** Is all-day event */
   allDay: boolean;
+
+  /** Event description */
+  description?: string;
+
+  /** Event location */
+  location?: string;
+}
+
+/**
+ * ICS subscription cache
+ */
+export interface ICSCache {
+  /** Subscription ID */
+  subscriptionId: string;
+
+  /** Cached events */
+  events: ICSEvent[];
+
+  /** When cache was last updated */
+  lastUpdated: string;
+
+  /** When cache expires */
+  expires: string;
 }
 
 // Event constants

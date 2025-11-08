@@ -38,11 +38,11 @@ npm run format:check
 
 ## Project Status
 
-**Current Phase**: Phase 2 Complete ✅
+**Current Phase**: Phase 3 Complete ✅
 
 - ✅ Phase 1: Project Setup (COMPLETE)
 - ✅ Phase 2: Core Infrastructure (COMPLETE)
-- ⏳ Phase 3: Calendar Integration
+- ✅ Phase 3: Calendar Integration (COMPLETE)
 - ⏳ Phase 4: Inline Task Conversion
 - ⏳ Phase 5: Bases Integration
 - ⏳ Phase 6: MCP Server
@@ -116,10 +116,42 @@ statusDescription: ""   # Free text
 ## Code Size Budget
 
 - **Target**: 4,500 lines total
-- **Current**: ~1,099 lines (Phase 1 + Phase 2 complete)
+- **Current**: ~1,594 lines (Phase 1 + Phase 2 + Phase 3 complete)
   - Phase 1: ~284 lines (types, settings, UI)
   - Phase 2: ~815 lines (TaskManager, TaskService, FieldMapper)
-- **Remaining**: ~3,401 lines for Phases 3-7
+  - Phase 3: ~443 lines (ICSSubscriptionService, CalendarImportService, EventEmitter)
+- **Remaining**: ~2,906 lines for Phases 4-7
+
+## Phase 3 Implementation Details
+
+### ICSSubscriptionService (src/services/ICSSubscriptionService.ts)
+- **Purpose**: Fetch and cache calendar events from Outlook ICS feed
+- **Design**: Simplified from TaskNotes (694 → 208 lines)
+- **Key Methods**:
+  - `initialize()` - Start refresh timer
+  - `fetchSubscription()` - Fetch from URL, parse, cache
+  - `getAllEvents()` - Return cached events (with grace period)
+- **Caching**: 15-minute expiration + 5-minute grace period
+- **Architecture**: Extends EventEmitter for event-driven pattern
+- **Features**: VTIMEZONE support, all-day detection, RRULE expansion (1-year, max 100 instances)
+- **Simplifications**: No EXDATE/RECURRENCE-ID, no local files, no multi-subscription UI
+
+### CalendarImportService (src/services/CalendarImportService.ts)
+- **Purpose**: Import calendar meetings into daily notes as wikilinks
+- **Key Methods**:
+  - `importTodaysMeetings(activeNote)` - Main entry point
+  - `findAgendaHeading(content)` - Locate "#### 📆 Agenda" heading
+  - `sanitizeMeetingTitle(title)` - Safe filename conversion
+  - `extractWikilinksUnderHeading(content, headingIndex)` - Deduplication
+  - `insertWikilinksAtHeading(content, headingIndex, wikilinks)` - Update note
+- **Sanitization Rules**: Obsidian syntax, filesystem forbidden chars, Windows reserved names
+- **Deduplication**: Check existing wikilinks before insertion
+- **Error Handling**: User notices for missing heading, network errors, invalid ICS, no meetings
+
+### EventEmitter (src/utils/EventEmitter.ts)
+- **Purpose**: Simple pub/sub for service communication
+- **Methods**: `on()`, `emit()`, `removeAllListeners()`
+- **Usage**: ICSSubscriptionService emits 'data-changed' events
 
 ## Phase 2 Implementation Details
 
