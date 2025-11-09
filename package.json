@@ -11,7 +11,10 @@
 		"lint": "eslint src --ext .ts",
 		"lint:fix": "eslint src --ext .ts --fix",
 		"format": "prettier --write \"src/**/*.ts\"",
-		"format:check": "prettier --check \"src/**/*.ts\""
+		"format:check": "prettier --check \"src/**/*.ts\"",
+		"test": "jest",
+		"test:watch": "jest --watch",
+		"test:coverage": "jest --coverage"
 	},
 	"keywords": [
 		"obsidian",
@@ -22,14 +25,17 @@
 	"author": "Alex",
 	"license": "MIT",
 	"devDependencies": {
+		"@types/jest": "^30.0.0",
 		"@types/node": "^22.10.5",
 		"@typescript-eslint/eslint-plugin": "^8.22.0",
 		"@typescript-eslint/parser": "^8.22.0",
 		"builtin-modules": "^5.0.0",
 		"esbuild": "^0.25.9",
 		"eslint": "^8.56.0",
+		"jest": "^30.2.0",
 		"obsidian": "latest",
 		"prettier": "^3.6.2",
+		"ts-jest": "^29.4.5",
 		"tslib": "^2.8.1",
 		"typescript": "^5.9.2"
 	},
@@ -37,7 +43,6 @@
 		"@codemirror/state": "^6.4.1",
 		"@codemirror/view": "^6.37.2",
 		"chrono-node": "^2.7.5",
-		"date-fns": "^4.1.0",
 		"ical.js": "^2.2.1",
 		"yaml": "^2.3.1"
 	}

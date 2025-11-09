@@ -14,7 +14,9 @@
       "Bash(CalendarImportService.ts)",
       "Bash(find:*)",
       "Bash(npm install:*)",
-      "Skill(obsidian-plugin-builder)"
+      "Skill(obsidian-plugin-builder)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm test:*)"
     ],
     "deny": [],
     "ask": []
