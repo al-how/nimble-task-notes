@@ -48,14 +48,16 @@ statusDescription: "Waiting for approval"
 
 ## Installation
 
-### Manual Installation
+### Manual Installation (From Release)
 
 1. Download the latest release from the [Releases](https://github.com/yourusername/lightweight-tasks/releases) page
 2. Extract the files to your Obsidian vault's `.obsidian/plugins/lightweight-tasks/` folder
 3. Reload Obsidian
 4. Enable "Lightweight Tasks" in Settings → Community Plugins
 
-### Development Installation
+### Manual Installation (Build From Source)
+
+If you want to install the latest development version in your live vault:
 
 ```bash
 # Clone the repository
@@ -65,12 +67,49 @@ cd lightweight-tasks
 # Install dependencies
 npm install
 
-# Build and copy to test vault
+# Build production version
+npm run build:deploy
+```
+
+**Important**: By default, this copies to `~/testvault/test/.obsidian/plugins/lightweight-tasks`.
+
+To deploy to your **live vault**, create a `.copy-files.local` file in the project root with your vault path:
+
+```
+C:\path\to\your\vault\.obsidian\plugins\lightweight-tasks
+```
+
+Or on Mac/Linux:
+```
+/Users/yourname/Documents/MyVault/.obsidian/plugins/lightweight-tasks
+```
+
+Then run:
+```bash
+npm run build:deploy
+```
+
+This will:
+1. Run type checking
+2. Build optimized production bundle (384KB, no source maps)
+3. Copy `main.js` and `manifest.json` to your vault
+4. Your vault will have only 2-3 files (~388KB total)
+
+After deployment, reload Obsidian and enable "Lightweight Tasks" in Settings → Community Plugins.
+
+### Development Installation (Test Vault)
+
+For development with automatic reloading:
+
+```bash
+# Build and copy to test vault (includes source maps for debugging)
 npm run dev
 
-# Or watch for changes
+# Or watch for changes (rebuilds on file save)
 npm run dev:watch
 ```
+
+**Note**: Development builds include source maps and are larger (~3MB). Use `npm run build:deploy` for production deployments.
 
 ## Usage
 

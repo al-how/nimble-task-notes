@@ -7,6 +7,7 @@
 		"dev": "node esbuild.config.mjs && node copy-files.mjs",
 		"dev:watch": "node esbuild.config.mjs --watch",
 		"build": "tsc --noEmit --skipLibCheck && node esbuild.config.mjs production",
+		"build:deploy": "npm run build && node copy-files.mjs",
 		"typecheck": "tsc --noEmit --skipLibCheck",
 		"lint": "eslint src --ext .ts",
 		"lint:fix": "eslint src --ext .ts --fix",
