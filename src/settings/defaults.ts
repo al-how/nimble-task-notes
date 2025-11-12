@@ -10,4 +10,7 @@ export const DEFAULT_SETTINGS: LightweightTasksSettings = {
   enableHTTPAPI: false,
   apiPort: 27124,
   apiKey: "",
+  propertyNames: {
+    status: "taskStatus",
+  },
 };

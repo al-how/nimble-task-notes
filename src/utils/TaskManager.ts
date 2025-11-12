@@ -88,9 +88,10 @@ export class TaskManager extends Events {
     // Extract title from filename
     const title = file.basename;
 
-    // Parse complete (boolean)
-    const complete =
-      typeof frontmatter.complete === "boolean" ? frontmatter.complete : false;
+    // Parse complete (boolean) - support configured property name and legacy "complete"
+    const statusProp = this.plugin.settings.propertyNames.status;
+    const statusValue = frontmatter[statusProp] ?? frontmatter.complete;
+    const complete = typeof statusValue === "boolean" ? statusValue : false;
 
     // Parse due date (YYYY-MM-DD string or null)
     let due: string | null = null;

@@ -5,6 +5,9 @@ import { TaskInfo } from '../../types';
 const mockPlugin = {
 	settings: {
 		defaultTags: ['task'],
+		propertyNames: {
+			status: 'taskStatus',
+		},
 	},
 } as any;
 
@@ -31,7 +34,7 @@ describe('FieldMapper', () => {
 			const result = fieldMapper.mapTaskInfoToFrontmatter(taskInfo);
 
 			expect(result).toEqual({
-				complete: false,
+				taskStatus: false,
 				due: '2025-11-15',
 				projects: ['[[Project A]]'],
 				tags: ['task', 'urgent'],
@@ -61,7 +64,7 @@ describe('FieldMapper', () => {
 		it('should convert valid frontmatter to TaskInfo', () => {
 			const frontmatter = {
 				tags: ['task', 'urgent'],
-				complete: false,
+				taskStatus: false,
 				due: '2025-11-15',
 				projects: ['[[Project A]]'],
 				statusDescription: 'In progress',
@@ -180,13 +183,27 @@ describe('FieldMapper', () => {
 
 			expect(result?.title).toBe('TaskName');
 		});
+
+		it('should support legacy "complete" property for backward compatibility', () => {
+			const frontmatter = {
+				tags: ['task'],
+				complete: true, // Legacy property name
+			};
+
+			const result = fieldMapper.mapFrontmatterToTaskInfo(
+				frontmatter,
+				'test.md'
+			);
+
+			expect(result?.complete).toBe(true);
+		});
 	});
 
 	describe('validateTaskFrontmatter', () => {
 		it('should validate correct task frontmatter', () => {
 			const frontmatter = {
 				tags: ['task'],
-				complete: false,
+				taskStatus: false,
 				due: '2025-11-15',
 				projects: ['[[Project A]]'],
 				statusDescription: 'In progress',
@@ -211,14 +228,20 @@ describe('FieldMapper', () => {
 			expect(fieldMapper.validateTaskFrontmatter(frontmatter)).toBe(false);
 		});
 
-		it('should reject frontmatter with non-boolean complete', () => {
-			const frontmatter = { tags: ['task'], complete: 'true' };
+		it('should reject frontmatter with non-boolean taskStatus', () => {
+			const frontmatter = { tags: ['task'], taskStatus: 'true' };
 
 			expect(fieldMapper.validateTaskFrontmatter(frontmatter)).toBe(false);
 		});
 
-		it('should accept frontmatter with missing complete field', () => {
+		it('should accept frontmatter with missing taskStatus field', () => {
 			const frontmatter = { tags: ['task'] };
+
+			expect(fieldMapper.validateTaskFrontmatter(frontmatter)).toBe(true);
+		});
+
+		it('should validate legacy "complete" property for backward compatibility', () => {
+			const frontmatter = { tags: ['task'], complete: true };
 
 			expect(fieldMapper.validateTaskFrontmatter(frontmatter)).toBe(true);
 		});
@@ -283,7 +306,7 @@ describe('FieldMapper', () => {
 			const result = fieldMapper.createDefaultFrontmatter({});
 
 			expect(result).toEqual({
-				complete: false,
+				taskStatus: false,
 				due: null,
 				projects: [],
 				tags: ['task'],
@@ -303,7 +326,7 @@ describe('FieldMapper', () => {
 			const result = fieldMapper.createDefaultFrontmatter(partial);
 
 			expect(result).toEqual({
-				complete: true,
+				taskStatus: true,
 				due: '2025-11-15',
 				projects: ['[[Project A]]'],
 				tags: ['task', 'urgent'],

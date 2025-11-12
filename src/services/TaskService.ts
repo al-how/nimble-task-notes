@@ -97,8 +97,9 @@ export class TaskService {
       const content = await this.app.vault.read(file);
       const { frontmatter, body } = this.parseFrontmatter(content);
 
+      const statusProp = this.plugin.settings.propertyNames.status;
       if (updates.complete !== undefined) {
-        frontmatter.complete = updates.complete;
+        frontmatter[statusProp] = updates.complete;
       }
       if (updates.due !== undefined) {
         frontmatter.due = updates.due;
@@ -221,8 +222,9 @@ export class TaskService {
       tags.push("task");
     }
 
+    const statusProp = this.plugin.settings.propertyNames.status;
     return {
-      complete: data.complete || false,
+      [statusProp]: data.complete || false,
       due: data.due || null,
       projects: data.projects || [],
       tags,

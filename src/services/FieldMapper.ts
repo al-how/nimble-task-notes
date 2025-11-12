@@ -18,8 +18,9 @@ export class FieldMapper {
    * Convert TaskInfo to frontmatter format
    */
   mapTaskInfoToFrontmatter(task: TaskInfo): Record<string, any> {
+    const statusProp = this.plugin.settings.propertyNames.status;
     return {
-      complete: task.complete,
+      [statusProp]: task.complete,
       due: task.due,
       projects: task.projects,
       tags: task.tags,
@@ -37,8 +38,10 @@ export class FieldMapper {
 
     const title = this.extractTitleFromPath(path);
 
-    const complete =
-      typeof frontmatter.complete === "boolean" ? frontmatter.complete : false;
+    const statusProp = this.plugin.settings.propertyNames.status;
+    // Support both configured property name and legacy "complete" for backward compatibility
+    const statusValue = frontmatter[statusProp] ?? frontmatter.complete;
+    const complete = typeof statusValue === "boolean" ? statusValue : false;
 
     let due: string | null = null;
     if (frontmatter.due) {
@@ -93,10 +96,10 @@ export class FieldMapper {
       return false;
     }
 
-    if (
-      frontmatter.complete !== undefined &&
-      typeof frontmatter.complete !== "boolean"
-    ) {
+    const statusProp = this.plugin.settings.propertyNames.status;
+    // Check configured property name, but also support legacy "complete" for backward compatibility
+    const statusValue = frontmatter[statusProp] ?? frontmatter.complete;
+    if (statusValue !== undefined && typeof statusValue !== "boolean") {
       return false;
     }
 
@@ -136,8 +139,9 @@ export class FieldMapper {
       tags.push("task");
     }
 
+    const statusProp = this.plugin.settings.propertyNames.status;
     return {
-      complete: partial.complete || false,
+      [statusProp]: partial.complete || false,
       due: partial.due || null,
       projects: partial.projects || [],
       tags,

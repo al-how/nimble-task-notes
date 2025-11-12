@@ -3,7 +3,11 @@ import { App, TFile } from 'obsidian';
 
 // Mock plugin
 const mockPlugin = {
-	settings: {},
+	settings: {
+		propertyNames: {
+			status: 'taskStatus',
+		},
+	},
 } as any;
 
 describe('TaskManager', () => {
@@ -76,7 +80,7 @@ describe('TaskManager', () => {
 			app.metadataCache.setFileCache(file, {
 				frontmatter: {
 					tags: ['task'],
-					complete: false,
+					taskStatus: false,
 					due: '2025-11-15',
 					projects: ['[[Project A]]'],
 					statusDescription: 'In progress',
@@ -95,7 +99,7 @@ describe('TaskManager', () => {
 			expect(result?.file).toBe(file);
 		});
 
-		it('should handle missing complete field (default to false)', () => {
+		it('should handle missing taskStatus field (default to false)', () => {
 			const file = new TFile('test.md');
 			app.vault.files.set('test.md', file);
 			app.metadataCache.setFileCache(file, {
@@ -104,6 +108,17 @@ describe('TaskManager', () => {
 
 			const result = taskManager.getTaskInfo('test.md');
 			expect(result?.complete).toBe(false);
+		});
+
+		it('should support legacy "complete" property for backward compatibility', () => {
+			const file = new TFile('test.md');
+			app.vault.files.set('test.md', file);
+			app.metadataCache.setFileCache(file, {
+				frontmatter: { tags: ['task'], complete: true },
+			});
+
+			const result = taskManager.getTaskInfo('test.md');
+			expect(result?.complete).toBe(true);
 		});
 
 		it('should handle invalid due date (set to null)', () => {
@@ -283,10 +298,10 @@ describe('TaskManager', () => {
 			app.vault.files.set('task2.md', task2);
 
 			app.metadataCache.setFileCache(task1, {
-				frontmatter: { tags: ['task'], complete: false },
+				frontmatter: { tags: ['task'], taskStatus: false },
 			});
 			app.metadataCache.setFileCache(task2, {
-				frontmatter: { tags: ['task'], complete: true },
+				frontmatter: { tags: ['task'], taskStatus: true },
 			});
 
 			const result = taskManager.getIncompleteTasks();
@@ -305,10 +320,10 @@ describe('TaskManager', () => {
 			app.vault.files.set('task2.md', task2);
 
 			app.metadataCache.setFileCache(task1, {
-				frontmatter: { tags: ['task'], complete: false },
+				frontmatter: { tags: ['task'], taskStatus: false },
 			});
 			app.metadataCache.setFileCache(task2, {
-				frontmatter: { tags: ['task'], complete: true },
+				frontmatter: { tags: ['task'], taskStatus: true },
 			});
 
 			const result = taskManager.getCompleteTasks();
@@ -387,22 +402,16 @@ describe('TaskManager', () => {
 			app.vault.files.set('task2.md', task2);
 			app.vault.files.set('task3.md', task3);
 
-			const yesterday = new Date();
-			yesterday.setDate(yesterday.getDate() - 1);
-			const yesterdayStr = yesterday.toISOString().split('T')[0];
-
-			const tomorrow = new Date();
-			tomorrow.setDate(tomorrow.getDate() + 1);
-			const tomorrowStr = tomorrow.toISOString().split('T')[0];
-
+			// Use fixed past date (2025-01-01) for testing
 			app.metadataCache.setFileCache(task1, {
-				frontmatter: { tags: ['task'], due: yesterdayStr, complete: false },
+				frontmatter: { tags: ['task'], due: '2025-01-01', taskStatus: false },
 			});
 			app.metadataCache.setFileCache(task2, {
-				frontmatter: { tags: ['task'], due: yesterdayStr, complete: true },
+				frontmatter: { tags: ['task'], due: '2025-01-01', taskStatus: true },
 			});
+			// Use future date (2099-12-31) for testing
 			app.metadataCache.setFileCache(task3, {
-				frontmatter: { tags: ['task'], due: tomorrowStr, complete: false },
+				frontmatter: { tags: ['task'], due: '2099-12-31', taskStatus: false },
 			});
 
 			const result = taskManager.getOverdueTasks();

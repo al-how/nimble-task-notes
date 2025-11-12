@@ -74,7 +74,6 @@ This plugin is built from scratch with only essential features:
 - ❌ Dependency tracking
 - ❌ Advanced filtering UI
 - ❌ Webhook integration
-- ❌ Custom property name mapping
 
 ### Core Architecture Decisions
 
@@ -83,6 +82,7 @@ This plugin is built from scratch with only essential features:
 3. **Modal-based prompts**: Use Obsidian's Modal class instead of CodeMirror widgets
 4. **No checkbox sync**: Interactive widgets show status, but checkboxes don't bidirectionally sync
 5. **HTTP API for MCP**: MCP server calls plugin API instead of direct file access
+6. **Configurable property names**: Task frontmatter properties are configurable in settings (Phase 1: status property only)
 
 ## Key Files
 
@@ -110,15 +110,22 @@ This plugin is built from scratch with only essential features:
 
 ## Task Properties Model
 
+**Default Configuration (configurable in settings):**
+
 ```yaml
 ---
-complete: false          # Boolean
+taskStatus: false       # Boolean (property name configurable, default: "taskStatus")
 due: 2025-11-08         # YYYY-MM-DD or null
 projects: ["[[Client Alpha]]"]  # Array of wikilinks
 tags: [task]            # Always includes 'task'
 statusDescription: ""   # Free text
 ---
 ```
+
+**Property Configuration:**
+- The status property name is configurable in settings (default: `taskStatus`)
+- Legacy `complete` property is supported for backward compatibility
+- Future phases will add configuration for other properties
 
 ## Development Workflow
 

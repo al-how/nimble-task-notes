@@ -53,6 +53,14 @@ export interface TaskCreationData {
 }
 
 /**
+ * Property name configuration for task frontmatter
+ */
+export interface PropertyNames {
+  /** Name of the status/completion property (default: "taskStatus") */
+  status: string;
+}
+
+/**
  * Plugin settings interface
  */
 export interface LightweightTasksSettings {
@@ -82,6 +90,9 @@ export interface LightweightTasksSettings {
 
   /** API key for authentication */
   apiKey: string;
+
+  /** Configurable property names for task frontmatter */
+  propertyNames: PropertyNames;
 }
 
 /**

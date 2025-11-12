@@ -60,6 +60,25 @@ export class LightweightTasksSettingTab extends PluginSettingTab {
           }),
       );
 
+    // Property Configuration
+    containerEl.createEl("h3", { text: "Property Configuration" });
+
+    new Setting(containerEl)
+      .setName("Status property name")
+      .setDesc("Name of the property that stores task completion status (boolean)")
+      .addText((text) =>
+        text
+          .setPlaceholder("taskStatus")
+          .setValue(this.plugin.settings.propertyNames.status)
+          .onChange(async (value) => {
+            const trimmed = value.trim();
+            if (trimmed) {
+              this.plugin.settings.propertyNames.status = trimmed;
+              await this.plugin.saveSettings();
+            }
+          }),
+      );
+
     // Task Creation
     containerEl.createEl("h3", { text: "Task Creation" });
 
