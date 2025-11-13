@@ -20,13 +20,16 @@ Tasks are stored as individual markdown files with YAML frontmatter:
 
 ```yaml
 ---
-complete: false
+taskStatus: false
 due: 2025-11-15
+completed: null  # Auto-populated when task marked complete
 projects: ["[[Client Alpha]]", "[[Marketing]]"]
 tags: [task, urgent]
 statusDescription: "Waiting for approval"
 ---
 ```
+
+**Auto-Completion Date**: When you mark a task as complete in Obsidian's properties panel, the `completed` property automatically populates with today's date. Mark it incomplete, and the date clears automatically.
 
 ### 🚀 Performance Optimized
 - **Instant load time**: < 100ms plugin startup (50x faster than before optimization)
@@ -163,6 +166,17 @@ Access plugin settings via Settings → Lightweight Tasks:
 #### Task Settings
 - **Task Folder**: Where to create task files (default: `Tasks/`)
 - **Default Tags**: Tags to add to new tasks (default: `["task"]`)
+
+#### Property Configuration
+All task frontmatter property names are configurable:
+- **Status Property**: Name for task completion status (default: `taskStatus`)
+- **Due Date Property**: Name for due date (default: `due`)
+- **Completion Date Property**: Name for auto-populated completion date (default: `completed`)
+- **Projects Property**: Name for project wikilinks (default: `projects`)
+- **Tags Property**: Name for tags array (default: `tags`)
+- **Status Description Property**: Name for status notes (default: `statusDescription`)
+
+This allows you to customize property names to match your existing vault structure or preferences.
 
 ### Finding Your Outlook ICS URL
 

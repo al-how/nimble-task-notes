@@ -83,6 +83,7 @@ This plugin is built from scratch with only essential features:
 4. **No checkbox sync**: Interactive widgets show status, but checkboxes don't bidirectionally sync
 5. **HTTP API for MCP**: MCP server calls plugin API instead of direct file access
 6. **Configurable property names**: ALL task frontmatter properties are configurable in settings (Phase 2A complete)
+7. **Auto-completion date**: Metadata change listener automatically populates/clears completion date when task status changes
 
 ## Key Files
 
@@ -102,9 +103,9 @@ This plugin is built from scratch with only essential features:
 - [src/services/TaskConversionService.ts](src/services/TaskConversionService.ts) - Checkbox-to-task conversion (~235 lines)
 
 ### Plugin Infrastructure
-- [src/main.ts](src/main.ts) - Plugin entry point with service initialization (~90 lines)
-- [src/types.ts](src/types.ts) - Core type definitions (~174 lines)
-- [src/settings/SettingTab.ts](src/settings/SettingTab.ts) - Settings UI
+- [src/main.ts](src/main.ts) - Plugin entry point with service initialization and metadata change listener (~210 lines)
+- [src/types.ts](src/types.ts) - Core type definitions (~193 lines)
+- [src/settings/SettingTab.ts](src/settings/SettingTab.ts) - Settings UI (~238 lines)
 - [src/settings/defaults.ts](src/settings/defaults.ts) - Default configuration
 - [docs/PRD-Lightweight-Task-Plugin.md](docs/PRD-Lightweight-Task-Plugin.md) - Full requirements
 
@@ -116,6 +117,7 @@ This plugin is built from scratch with only essential features:
 ---
 taskStatus: false       # Boolean (property name: "taskStatus" - configurable)
 due: 2025-11-08         # YYYY-MM-DD (property name: "due" - configurable)
+completed: null         # YYYY-MM-DD (property name: "completed" - configurable, auto-populated)
 projects: ["[[Client Alpha]]"]  # Array of wikilinks (property name: "projects" - configurable)
 tags: [task]            # Array (property name: "tags" - configurable, always includes 'task')
 statusDescription: ""   # String (property name: "statusDescription" - configurable)
@@ -124,9 +126,15 @@ statusDescription: ""   # String (property name: "statusDescription" - configura
 
 **Property Configuration (Phase 2A Complete):**
 - ALL task frontmatter property names are configurable in Settings → Property Configuration
-- Default names: `taskStatus`, `due`, `projects`, `tags`, `statusDescription`
+- Default names: `taskStatus`, `due`, `completed`, `projects`, `tags`, `statusDescription`
 - Backward compatibility: Legacy `complete` property supported as fallback for status
-- Example custom config: Use `done`, `deadline`, `linkedProjects`, `labels`, `notes`
+- Example custom config: Use `done`, `deadline`, `completedOn`, `linkedProjects`, `labels`, `notes`
+
+**Auto-Completion Date Feature:**
+- When task status changes to `true` → `completed` auto-set to current date (YYYY-MM-DD)
+- When task status changes to `false` → `completed` cleared (set to `null`)
+- Implemented via metadata change listener in `main.ts:handleMetadataChange()`
+- Works automatically when user modifies `taskStatus` in Obsidian's properties panel
 
 ## Development Workflow
 
@@ -158,13 +166,14 @@ statusDescription: ""   # String (property name: "statusDescription" - configura
 ## Code Size Budget
 
 - **Target**: 4,500 lines total
-- **Current**: ~2,460 lines (Phases 1-4 + optimizations)
+- **Current**: ~2,660 lines (Phases 1-4 + optimizations + auto-completion)
   - Phase 1: ~284 lines (types, settings, UI)
   - Phase 2: ~815 lines (TaskManager, TaskService, FieldMapper)
   - Phase 3: ~443 lines (ICSSubscriptionService, CalendarImportService, EventEmitter)
   - Phase 4: ~802 lines (NaturalLanguageParser, TaskCreationModal, TaskConversionService)
   - Phase 7 Optimizations: ~116 lines (ServiceContainer)
-- **Remaining**: ~2,040 lines for Phases 5-6 + testing/docs
+  - Auto-Completion Date: ~200 lines (metadata listener, tests, settings UI)
+- **Remaining**: ~1,840 lines for Phases 5-6 + additional testing/docs
 
 ## Phase 3 Implementation Details
 
@@ -273,8 +282,9 @@ statusDescription: ""   # String (property name: "statusDescription" - configura
   - `createDefaultFrontmatter(partial)` - Create with defaults
 - **Validation Rules**:
   - Must have `task` tag in tags array
-  - `complete`: boolean only
+  - `taskStatus`: boolean only
   - `due`: YYYY-MM-DD date string or null
+  - `completed`: YYYY-MM-DD date string or null
   - `projects`: array of wikilinks ([[Name]] format)
   - `tags`: string array (always includes "task")
   - `statusDescription`: any string
@@ -337,6 +347,43 @@ statusDescription: ""   # String (property name: "statusDescription" - configura
 - **Command Added**: "Convert checkbox to task" with Ctrl+Enter (Cmd+Enter on Mac) hotkey
 - **Command Callback**: Calls `taskConversionService.convertCheckboxToTask(editor)`
 
+## Auto-Completion Date Implementation
+
+### Metadata Change Listener (src/main.ts)
+- **Purpose**: Automatically populate/clear completion date when task status changes
+- **Design**: Listens to Obsidian's metadata cache change events
+- **Implementation**:
+  ```typescript
+  this.registerEvent(
+    this.app.metadataCache.on("changed", async (file) => {
+      await this.handleMetadataChange(file);
+    })
+  );
+  ```
+- **Logic Flow**:
+  1. Check if file is a task (has `#task` tag)
+  2. Compare current `taskStatus` with `completed` date
+  3. If status is `true` but no completion date → add today's date
+  4. If status is `false` but has completion date → clear the date
+  5. Update file frontmatter directly to avoid triggering another change event
+
+- **Key Methods**:
+  - `handleMetadataChange(file)` - Main handler for metadata changes
+  - `parseFrontmatter(content)` - Extract frontmatter from file content
+  - `buildFileContent(frontmatter, body)` - Rebuild file with updated frontmatter
+  - `formatDateForFrontmatter(date)` - Format Date object to YYYY-MM-DD
+
+- **Why This Approach**:
+  - Direct file modification avoids circular update loops
+  - Uses same YAML library as TaskService for consistency
+  - Handles edge cases (file not found, invalid frontmatter, etc.)
+  - Respects user's configured property names
+
+### TaskService Auto-Date Logic
+- **updateTask() Enhancement**: When `updates.complete` is provided, automatically set/clear completion date
+- **Integration Point**: Works alongside metadata listener for programmatic updates
+- **Consistency**: Both paths (UI changes and programmatic updates) maintain completion dates
+
 ## Testing
 
 Tests will be added in Phase 7. Use manual testing during development.
@@ -364,6 +411,16 @@ Tests will be added in Phase 7. Use manual testing during development.
 12. Test invalid date: enter "asdfasdf" → shows error, modal stays open
 13. Test special characters in title: `Task: with <symbols> & #tags`
 14. Test natural language dates: "tomorrow", "nov 15", "in 2 weeks"
+
+**Verification Steps for Auto-Completion Date**:
+1. Create or open a task file with `taskStatus: false` and `completed: null`
+2. In Obsidian's properties panel, toggle `taskStatus` from `false` to `true`
+3. Verify `completed` property automatically populates with today's date (YYYY-MM-DD)
+4. Toggle `taskStatus` back to `false`
+5. Verify `completed` property automatically clears (becomes `null`)
+6. Test with custom property names in Settings → Property Configuration
+7. Verify auto-completion works with custom property names (e.g., `done` and `completedOn`)
+8. Check console for any errors during status changes
 
 ## Important Notes
 
