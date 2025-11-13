@@ -18,13 +18,13 @@ export class FieldMapper {
    * Convert TaskInfo to frontmatter format
    */
   mapTaskInfoToFrontmatter(task: TaskInfo): Record<string, any> {
-    const statusProp = this.plugin.settings.propertyNames.status;
+    const propNames = this.plugin.settings.propertyNames;
     return {
-      [statusProp]: task.complete,
-      due: task.due,
-      projects: task.projects,
-      tags: task.tags,
-      statusDescription: task.statusDescription,
+      [propNames.status]: task.complete,
+      [propNames.due]: task.due,
+      [propNames.projects]: task.projects,
+      [propNames.tags]: task.tags,
+      [propNames.statusDescription]: task.statusDescription,
     };
   }
 
@@ -37,39 +37,43 @@ export class FieldMapper {
     }
 
     const title = this.extractTitleFromPath(path);
+    const propNames = this.plugin.settings.propertyNames;
 
-    const statusProp = this.plugin.settings.propertyNames.status;
-    // Support both configured property name and legacy "complete" for backward compatibility
-    const statusValue = frontmatter[statusProp] ?? frontmatter.complete;
+    // Status: support both configured property name and legacy "complete" for backward compatibility
+    const statusValue = frontmatter[propNames.status] ?? frontmatter.complete;
     const complete = typeof statusValue === "boolean" ? statusValue : false;
 
+    // Due date: use configured property name
     let due: string | null = null;
-    if (frontmatter.due) {
-      if (typeof frontmatter.due === "string") {
-        if (this.isValidDateString(frontmatter.due)) {
-          due = frontmatter.due;
+    if (frontmatter[propNames.due]) {
+      if (typeof frontmatter[propNames.due] === "string") {
+        if (this.isValidDateString(frontmatter[propNames.due])) {
+          due = frontmatter[propNames.due];
         }
-      } else if (frontmatter.due instanceof Date) {
-        due = this.formatDate(frontmatter.due);
+      } else if (frontmatter[propNames.due] instanceof Date) {
+        due = this.formatDate(frontmatter[propNames.due]);
       }
     }
 
-    const projects = Array.isArray(frontmatter.projects)
-      ? frontmatter.projects.filter(
+    // Projects: use configured property name
+    const projects = Array.isArray(frontmatter[propNames.projects])
+      ? frontmatter[propNames.projects].filter(
           (p: any) => typeof p === "string" && this.isWikilink(p),
         )
       : [];
 
-    const tags = Array.isArray(frontmatter.tags)
-      ? frontmatter.tags.filter((t: any) => typeof t === "string")
+    // Tags: use configured property name
+    const tags = Array.isArray(frontmatter[propNames.tags])
+      ? frontmatter[propNames.tags].filter((t: any) => typeof t === "string")
       : ["task"];
     if (!tags.includes("task")) {
       tags.push("task");
     }
 
+    // Status description: use configured property name
     const statusDescription =
-      typeof frontmatter.statusDescription === "string"
-        ? frontmatter.statusDescription
+      typeof frontmatter[propNames.statusDescription] === "string"
+        ? frontmatter[propNames.statusDescription]
         : "";
 
     return {
@@ -89,40 +93,45 @@ export class FieldMapper {
   validateTaskFrontmatter(frontmatter: any): boolean {
     if (!frontmatter) return false;
 
+    const propNames = this.plugin.settings.propertyNames;
+
+    // Tags validation: use configured property name
     if (
-      !Array.isArray(frontmatter.tags) ||
-      !frontmatter.tags.includes("task")
+      !Array.isArray(frontmatter[propNames.tags]) ||
+      !frontmatter[propNames.tags].includes("task")
     ) {
       return false;
     }
 
-    const statusProp = this.plugin.settings.propertyNames.status;
-    // Check configured property name, but also support legacy "complete" for backward compatibility
-    const statusValue = frontmatter[statusProp] ?? frontmatter.complete;
+    // Status validation: check configured property name, but also support legacy "complete"
+    const statusValue = frontmatter[propNames.status] ?? frontmatter.complete;
     if (statusValue !== undefined && typeof statusValue !== "boolean") {
       return false;
     }
 
-    if (frontmatter.due !== undefined && frontmatter.due !== null) {
-      if (typeof frontmatter.due === "string") {
-        if (!this.isValidDateString(frontmatter.due)) {
+    // Due date validation: use configured property name
+    if (frontmatter[propNames.due] !== undefined && frontmatter[propNames.due] !== null) {
+      if (typeof frontmatter[propNames.due] === "string") {
+        if (!this.isValidDateString(frontmatter[propNames.due])) {
           return false;
         }
-      } else if (!(frontmatter.due instanceof Date)) {
+      } else if (!(frontmatter[propNames.due] instanceof Date)) {
         return false;
       }
     }
 
+    // Projects validation: use configured property name
     if (
-      frontmatter.projects !== undefined &&
-      !Array.isArray(frontmatter.projects)
+      frontmatter[propNames.projects] !== undefined &&
+      !Array.isArray(frontmatter[propNames.projects])
     ) {
       return false;
     }
 
+    // Status description validation: use configured property name
     if (
-      frontmatter.statusDescription !== undefined &&
-      typeof frontmatter.statusDescription !== "string"
+      frontmatter[propNames.statusDescription] !== undefined &&
+      typeof frontmatter[propNames.statusDescription] !== "string"
     ) {
       return false;
     }
@@ -134,18 +143,19 @@ export class FieldMapper {
    * Create default frontmatter for a new task
    */
   createDefaultFrontmatter(partial: Partial<TaskInfo>): Record<string, any> {
+    const propNames = this.plugin.settings.propertyNames;
+
     const tags = partial.tags || [...this.plugin.settings.defaultTags];
     if (!tags.includes("task")) {
       tags.push("task");
     }
 
-    const statusProp = this.plugin.settings.propertyNames.status;
     return {
-      [statusProp]: partial.complete || false,
-      due: partial.due || null,
-      projects: partial.projects || [],
-      tags,
-      statusDescription: partial.statusDescription || "",
+      [propNames.status]: partial.complete || false,
+      [propNames.due]: partial.due || null,
+      [propNames.projects]: partial.projects || [],
+      [propNames.tags]: tags,
+      [propNames.statusDescription]: partial.statusDescription || "",
     };
   }
 

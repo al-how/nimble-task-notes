@@ -58,6 +58,14 @@ export interface TaskCreationData {
 export interface PropertyNames {
   /** Name of the status/completion property (default: "taskStatus") */
   status: string;
+  /** Name of the due date property (default: "due") */
+  due: string;
+  /** Name of the projects property (default: "projects") */
+  projects: string;
+  /** Name of the tags property (default: "tags") */
+  tags: string;
+  /** Name of the status description property (default: "statusDescription") */
+  statusDescription: string;
 }
 
 /**

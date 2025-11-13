@@ -7,6 +7,10 @@ const mockPlugin = {
 		defaultTags: ['task'],
 		propertyNames: {
 			status: 'taskStatus',
+			due: 'due',
+			projects: 'projects',
+			tags: 'tags',
+			statusDescription: 'statusDescription',
 		},
 	},
 } as any;
@@ -352,6 +356,231 @@ describe('FieldMapper', () => {
 
 			// Reset
 			mockPlugin.settings.defaultTags = ['task'];
+		});
+	});
+
+	describe('Phase 2A: All configurable property names', () => {
+		beforeEach(() => {
+			// Reset to default property names
+			mockPlugin.settings.propertyNames = {
+				status: 'taskStatus',
+				due: 'due',
+				projects: 'projects',
+				tags: 'tags',
+				statusDescription: 'statusDescription',
+			};
+		});
+
+		it('should use all configured property names when writing frontmatter', () => {
+			// Set custom property names
+			mockPlugin.settings.propertyNames = {
+				status: 'done',
+				due: 'deadline',
+				projects: 'linkedProjects',
+				tags: 'labels',
+				statusDescription: 'notes',
+			};
+
+			const taskInfo: TaskInfo = {
+				path: 'Tasks/MyTask.md',
+				title: 'MyTask',
+				complete: false,
+				due: '2025-11-15',
+				projects: ['[[Project A]]'],
+				tags: ['task', 'urgent'],
+				statusDescription: 'In progress',
+				file: undefined as any,
+			};
+
+			const result = fieldMapper.mapTaskInfoToFrontmatter(taskInfo);
+
+			expect(result).toEqual({
+				done: false,
+				deadline: '2025-11-15',
+				linkedProjects: ['[[Project A]]'],
+				labels: ['task', 'urgent'],
+				notes: 'In progress',
+			});
+		});
+
+		it('should read from all configured property names', () => {
+			// Set custom property names
+			mockPlugin.settings.propertyNames = {
+				status: 'done',
+				due: 'deadline',
+				projects: 'linkedProjects',
+				tags: 'labels',
+				statusDescription: 'notes',
+			};
+
+			const frontmatter = {
+				done: true,
+				deadline: '2025-11-15',
+				linkedProjects: ['[[Project A]]', '[[Project B]]'],
+				labels: ['task', 'urgent'],
+				notes: 'Almost done',
+			};
+
+			const result = fieldMapper.mapFrontmatterToTaskInfo(
+				frontmatter,
+				'Tasks/MyTask.md'
+			);
+
+			expect(result).not.toBeNull();
+			expect(result?.complete).toBe(true);
+			expect(result?.due).toBe('2025-11-15');
+			expect(result?.projects).toEqual(['[[Project A]]', '[[Project B]]']);
+			expect(result?.tags).toEqual(['task', 'urgent']);
+			expect(result?.statusDescription).toBe('Almost done');
+		});
+
+		it('should validate using all configured property names', () => {
+			// Set custom property names
+			mockPlugin.settings.propertyNames = {
+				status: 'done',
+				due: 'deadline',
+				projects: 'linkedProjects',
+				tags: 'labels',
+				statusDescription: 'notes',
+			};
+
+			const frontmatter = {
+				done: false,
+				deadline: '2025-11-15',
+				linkedProjects: ['[[Project A]]'],
+				labels: ['task'],
+				notes: 'Working on it',
+			};
+
+			expect(fieldMapper.validateTaskFrontmatter(frontmatter)).toBe(true);
+		});
+
+		it('should reject validation when configured tags property missing task tag', () => {
+			mockPlugin.settings.propertyNames.tags = 'labels';
+
+			const frontmatter = {
+				labels: ['urgent'], // Missing 'task' tag
+			};
+
+			expect(fieldMapper.validateTaskFrontmatter(frontmatter)).toBe(false);
+		});
+
+		it('should create default frontmatter with all configured property names', () => {
+			// Set custom property names
+			mockPlugin.settings.propertyNames = {
+				status: 'done',
+				due: 'deadline',
+				projects: 'linkedProjects',
+				tags: 'labels',
+				statusDescription: 'notes',
+			};
+
+			const result = fieldMapper.createDefaultFrontmatter({});
+
+			expect(result).toEqual({
+				done: false,
+				deadline: null,
+				linkedProjects: [],
+				labels: ['task'],
+				notes: '',
+			});
+		});
+
+		it('should handle mixed default and custom property names', () => {
+			// Only customize some properties
+			mockPlugin.settings.propertyNames = {
+				status: 'done',
+				due: 'due', // Keep default
+				projects: 'linkedProjects',
+				tags: 'tags', // Keep default
+				statusDescription: 'statusDescription', // Keep default
+			};
+
+			const taskInfo: TaskInfo = {
+				path: 'Tasks/MyTask.md',
+				title: 'MyTask',
+				complete: true,
+				due: '2025-11-15',
+				projects: ['[[Project A]]'],
+				tags: ['task'],
+				statusDescription: 'Complete',
+				file: undefined as any,
+			};
+
+			const result = fieldMapper.mapTaskInfoToFrontmatter(taskInfo);
+
+			expect(result).toEqual({
+				done: true,
+				due: '2025-11-15',
+				linkedProjects: ['[[Project A]]'],
+				tags: ['task'],
+				statusDescription: 'Complete',
+			});
+		});
+
+		it('should handle TaskNotes legacy naming (complete property)', () => {
+			// Configure to use TaskNotes legacy names
+			mockPlugin.settings.propertyNames = {
+				status: 'complete', // TaskNotes used "complete"
+				due: 'due',
+				projects: 'projects',
+				tags: 'tags',
+				statusDescription: 'statusDescription',
+			};
+
+			const taskInfo: TaskInfo = {
+				path: 'Tasks/MyTask.md',
+				title: 'MyTask',
+				complete: true,
+				due: null,
+				projects: [],
+				tags: ['task'],
+				statusDescription: '',
+				file: undefined as any,
+			};
+
+			const result = fieldMapper.mapTaskInfoToFrontmatter(taskInfo);
+
+			expect(result.complete).toBe(true);
+			expect(result.taskStatus).toBeUndefined();
+		});
+
+		it('should support reading from configured due date property', () => {
+			mockPlugin.settings.propertyNames.due = 'deadline';
+
+			const frontmatter = {
+				tags: ['task'],
+				deadline: '2025-12-25',
+			};
+
+			const result = fieldMapper.mapFrontmatterToTaskInfo(
+				frontmatter,
+				'test.md'
+			);
+
+			expect(result?.due).toBe('2025-12-25');
+		});
+
+		it('should validate configured projects property as array', () => {
+			mockPlugin.settings.propertyNames.projects = 'linkedProjects';
+
+			const frontmatter = {
+				tags: ['task'],
+				linkedProjects: 'Not an array', // Invalid
+			};
+
+			expect(fieldMapper.validateTaskFrontmatter(frontmatter)).toBe(false);
+		});
+
+		it('should validate configured statusDescription property as string', () => {
+			mockPlugin.settings.propertyNames.statusDescription = 'notes';
+
+			const frontmatter = {
+				tags: ['task'],
+				notes: 123, // Invalid - should be string
+			};
+
+			expect(fieldMapper.validateTaskFrontmatter(frontmatter)).toBe(false);
 		});
 	});
 });

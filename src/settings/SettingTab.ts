@@ -79,6 +79,70 @@ export class LightweightTasksSettingTab extends PluginSettingTab {
           }),
       );
 
+    new Setting(containerEl)
+      .setName("Due date property name")
+      .setDesc("Name of the property that stores task due date (YYYY-MM-DD)")
+      .addText((text) =>
+        text
+          .setPlaceholder("due")
+          .setValue(this.plugin.settings.propertyNames.due)
+          .onChange(async (value) => {
+            const trimmed = value.trim();
+            if (trimmed) {
+              this.plugin.settings.propertyNames.due = trimmed;
+              await this.plugin.saveSettings();
+            }
+          }),
+      );
+
+    new Setting(containerEl)
+      .setName("Projects property name")
+      .setDesc("Name of the property that stores project wikilinks (array)")
+      .addText((text) =>
+        text
+          .setPlaceholder("projects")
+          .setValue(this.plugin.settings.propertyNames.projects)
+          .onChange(async (value) => {
+            const trimmed = value.trim();
+            if (trimmed) {
+              this.plugin.settings.propertyNames.projects = trimmed;
+              await this.plugin.saveSettings();
+            }
+          }),
+      );
+
+    new Setting(containerEl)
+      .setName("Tags property name")
+      .setDesc("Name of the property that stores tags (array, always includes 'task')")
+      .addText((text) =>
+        text
+          .setPlaceholder("tags")
+          .setValue(this.plugin.settings.propertyNames.tags)
+          .onChange(async (value) => {
+            const trimmed = value.trim();
+            if (trimmed) {
+              this.plugin.settings.propertyNames.tags = trimmed;
+              await this.plugin.saveSettings();
+            }
+          }),
+      );
+
+    new Setting(containerEl)
+      .setName("Status description property name")
+      .setDesc("Name of the property that stores free-text status notes (string)")
+      .addText((text) =>
+        text
+          .setPlaceholder("statusDescription")
+          .setValue(this.plugin.settings.propertyNames.statusDescription)
+          .onChange(async (value) => {
+            const trimmed = value.trim();
+            if (trimmed) {
+              this.plugin.settings.propertyNames.statusDescription = trimmed;
+              await this.plugin.saveSettings();
+            }
+          }),
+      );
+
     // Task Creation
     containerEl.createEl("h3", { text: "Task Creation" });
 

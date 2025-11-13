@@ -47,14 +47,15 @@ export class TaskManager extends Events {
    * Check if a file is a task file
    *
    * A file is considered a task if its frontmatter contains
-   * the 'task' tag in the tags array.
+   * the 'task' tag in the tags array (using configured property name).
    *
    * @param frontmatter - Frontmatter object from metadata cache
    * @returns True if file has #task tag
    */
   isTaskFile(frontmatter: any): boolean {
     if (!frontmatter) return false;
-    const tags = frontmatter.tags || [];
+    const tagsProp = this.plugin.settings.propertyNames.tags;
+    const tags = frontmatter[tagsProp] || [];
     return Array.isArray(tags) && tags.includes("task");
   }
 
@@ -88,39 +89,40 @@ export class TaskManager extends Events {
     // Extract title from filename
     const title = file.basename;
 
+    const propNames = this.plugin.settings.propertyNames;
+
     // Parse complete (boolean) - support configured property name and legacy "complete"
-    const statusProp = this.plugin.settings.propertyNames.status;
-    const statusValue = frontmatter[statusProp] ?? frontmatter.complete;
+    const statusValue = frontmatter[propNames.status] ?? frontmatter.complete;
     const complete = typeof statusValue === "boolean" ? statusValue : false;
 
-    // Parse due date (YYYY-MM-DD string or null)
+    // Parse due date (YYYY-MM-DD string or null) - use configured property name
     let due: string | null = null;
-    if (frontmatter.due) {
-      if (typeof frontmatter.due === "string") {
-        if (this.isValidDateString(frontmatter.due)) {
-          due = frontmatter.due;
+    if (frontmatter[propNames.due]) {
+      if (typeof frontmatter[propNames.due] === "string") {
+        if (this.isValidDateString(frontmatter[propNames.due])) {
+          due = frontmatter[propNames.due];
         }
-      } else if (frontmatter.due instanceof Date) {
-        due = this.formatDate(frontmatter.due);
+      } else if (frontmatter[propNames.due] instanceof Date) {
+        due = this.formatDate(frontmatter[propNames.due]);
       }
     }
 
-    // Parse projects (array of wikilinks)
-    const projects = Array.isArray(frontmatter.projects)
-      ? frontmatter.projects.filter(
+    // Parse projects (array of wikilinks) - use configured property name
+    const projects = Array.isArray(frontmatter[propNames.projects])
+      ? frontmatter[propNames.projects].filter(
           (p: any) => typeof p === "string" && this.isWikilink(p),
         )
       : [];
 
-    // Parse tags (array of strings)
-    const tags = Array.isArray(frontmatter.tags)
-      ? frontmatter.tags.filter((t: any) => typeof t === "string")
+    // Parse tags (array of strings) - use configured property name
+    const tags = Array.isArray(frontmatter[propNames.tags])
+      ? frontmatter[propNames.tags].filter((t: any) => typeof t === "string")
       : ["task"];
 
-    // Parse statusDescription (string)
+    // Parse statusDescription (string) - use configured property name
     const statusDescription =
-      typeof frontmatter.statusDescription === "string"
-        ? frontmatter.statusDescription
+      typeof frontmatter[propNames.statusDescription] === "string"
+        ? frontmatter[propNames.statusDescription]
         : "";
 
     return {

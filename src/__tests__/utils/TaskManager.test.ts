@@ -6,6 +6,10 @@ const mockPlugin = {
 	settings: {
 		propertyNames: {
 			status: 'taskStatus',
+			due: 'due',
+			projects: 'projects',
+			tags: 'tags',
+			statusDescription: 'statusDescription',
 		},
 	},
 } as any;
@@ -418,6 +422,114 @@ describe('TaskManager', () => {
 			expect(result).toHaveLength(1);
 			expect(result[0].path).toBe('task1.md');
 			expect(result[0].complete).toBe(false);
+		});
+	});
+
+	describe('Phase 2A: Configurable property names', () => {
+		beforeEach(() => {
+			// Reset to default property names
+			mockPlugin.settings.propertyNames = {
+				status: 'taskStatus',
+				due: 'due',
+				projects: 'projects',
+				tags: 'tags',
+				statusDescription: 'statusDescription',
+			};
+		});
+
+		it('should read tasks with custom tags property name', () => {
+			// Configure custom tags property
+			mockPlugin.settings.propertyNames.tags = 'labels';
+			// Recreate taskManager with updated settings
+			taskManager = new TaskManager(app, mockPlugin);
+
+			const task1 = new TFile('task1.md');
+			app.vault.files.set('task1.md', task1);
+
+			app.vault.getMarkdownFiles = jest.fn().mockReturnValue([task1]);
+			app.metadataCache.setFileCache(task1, {
+				frontmatter: { labels: ['task'], taskStatus: false },
+			});
+
+			const result = taskManager.getAllTasks();
+			expect(result).toHaveLength(1);
+			expect(result[0].tags).toContain('task');
+		});
+
+		it('should filter incomplete tasks with custom status property', () => {
+			mockPlugin.settings.propertyNames.status = 'done';
+			// Recreate taskManager with updated settings
+			taskManager = new TaskManager(app, mockPlugin);
+
+			const task1 = new TFile('task1.md');
+			const task2 = new TFile('task2.md');
+			app.vault.files.set('task1.md', task1);
+			app.vault.files.set('task2.md', task2);
+
+			app.vault.getMarkdownFiles = jest.fn().mockReturnValue([task1, task2]);
+			app.metadataCache.setFileCache(task1, {
+				frontmatter: { tags: ['task'], done: false },
+			});
+			app.metadataCache.setFileCache(task2, {
+				frontmatter: { tags: ['task'], done: true },
+			});
+
+			const result = taskManager.getIncompleteTasks();
+			expect(result).toHaveLength(1);
+			expect(result[0].complete).toBe(false);
+		});
+
+		it('should filter tasks by date with custom due property', () => {
+			mockPlugin.settings.propertyNames.due = 'deadline';
+			// Recreate taskManager with updated settings
+			taskManager = new TaskManager(app, mockPlugin);
+
+			const task1 = new TFile('task1.md');
+			app.vault.files.set('task1.md', task1);
+
+			app.vault.getMarkdownFiles = jest.fn().mockReturnValue([task1]);
+			app.metadataCache.setFileCache(task1, {
+				frontmatter: { tags: ['task'], deadline: '2025-11-15', taskStatus: false },
+			});
+
+			const result = taskManager.getTasksForDate('2025-11-15');
+			expect(result).toHaveLength(1);
+			expect(result[0]).toBe('task1.md'); // Returns paths, not TaskInfo
+		});
+
+		it('should work with all custom property names', () => {
+			// Set all custom property names
+			mockPlugin.settings.propertyNames = {
+				status: 'done',
+				due: 'deadline',
+				projects: 'linkedProjects',
+				tags: 'labels',
+				statusDescription: 'notes',
+			};
+			// Recreate taskManager with updated settings
+			taskManager = new TaskManager(app, mockPlugin);
+
+			const task1 = new TFile('task1.md');
+			app.vault.files.set('task1.md', task1);
+
+			app.vault.getMarkdownFiles = jest.fn().mockReturnValue([task1]);
+			app.metadataCache.setFileCache(task1, {
+				frontmatter: {
+					labels: ['task', 'urgent'],
+					done: false,
+					deadline: '2025-11-15',
+					linkedProjects: ['[[Project A]]'],
+					notes: 'In progress',
+				},
+			});
+
+			const result = taskManager.getAllTasks();
+			expect(result).toHaveLength(1);
+			expect(result[0].complete).toBe(false);
+			expect(result[0].due).toBe('2025-11-15');
+			expect(result[0].projects).toEqual(['[[Project A]]']);
+			expect(result[0].tags).toEqual(['task', 'urgent']);
+			expect(result[0].statusDescription).toBe('In progress');
 		});
 	});
 });

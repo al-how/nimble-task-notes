@@ -9,7 +9,9 @@ Lightweight Tasks allows users to customize the property names used in task fron
 ## Status
 
 - **Phase 1**: ✅ **COMPLETE** (Status property configuration)
-- **Phase 2**: 📋 **PLANNED** (Full property template configuration)
+- **Phase 2A**: ✅ **COMPLETE** (All property names configurable - simple mode)
+- **Phase 2B**: 📋 **PLANNED** (Advanced template editor)
+- **Phase 2C**: 📋 **PLANNED** (Migration tools)
 
 ---
 
@@ -170,7 +172,101 @@ Comprehensive test coverage ensures reliability:
 
 ---
 
-## Phase 2: Full Property Template Configuration (PLANNED)
+## Phase 2A: All Property Names Configurable (COMPLETE)
+
+### Implementation Summary
+
+**Completed**: Phase 2A extends Phase 1's configurable status property to make ALL task frontmatter properties configurable.
+
+**Status**: ✅ COMPLETE - All tests passing (121/121)
+
+### What Changed
+
+Extended property name configuration from status-only to all 5 task properties:
+
+**New PropertyNames interface**:
+```typescript
+export interface PropertyNames {
+  status: string;           // Phase 1 ✅
+  due: string;              // Phase 2A ✅
+  projects: string;         // Phase 2A ✅
+  tags: string;             // Phase 2A ✅
+  statusDescription: string; // Phase 2A ✅
+}
+```
+
+**Default values**:
+```typescript
+propertyNames: {
+  status: "taskStatus",
+  due: "due",
+  projects: "projects",
+  tags: "tags",
+  statusDescription: "statusDescription",
+}
+```
+
+### Files Modified (Phase 2A)
+
+| File | Lines Changed | Description |
+|------|---------------|-------------|
+| [src/types.ts](../src/types.ts) | +4 | Extended PropertyNames interface |
+| [src/settings/defaults.ts](../src/settings/defaults.ts) | +4 | Added default property names |
+| [src/services/FieldMapper.ts](../src/services/FieldMapper.ts) | ~55 | Use all configurable property names |
+| [src/utils/TaskManager.ts](../src/utils/TaskManager.ts) | ~15 | Use configured names in isTaskFile() and getTaskInfo() |
+| [src/settings/SettingTab.ts](../src/settings/SettingTab.ts) | +70 | Added 4 new property name inputs |
+| [src/__tests__/services/FieldMapper.test.ts](../src/__tests__/services/FieldMapper.test.ts) | +225 | Added Phase 2A test suite (14 new tests) |
+| [src/__tests__/utils/TaskManager.test.ts](../src/__tests__/utils/TaskManager.test.ts) | +80 | Added Phase 2A test suite (4 new tests) |
+| [CLAUDE.md](../CLAUDE.md) | ~15 | Updated documentation |
+
+**Total Impact:** ~468 lines changed/added across 8 files
+
+### Test Results
+
+All 121 tests passing ✅ (14 Phase 1 tests + 14 Phase 2A FieldMapper tests + 4 Phase 2A TaskManager tests + 89 other tests)
+
+### Example Configurations
+
+**Full custom naming** (all properties renamed):
+```typescript
+{
+  propertyNames: {
+    status: "done",
+    due: "deadline",
+    projects: "linkedProjects",
+    tags: "labels",
+    statusDescription: "notes"
+  }
+}
+```
+
+Resulting frontmatter:
+```yaml
+---
+done: false
+deadline: 2025-11-15
+linkedProjects: ["[[Project A]]"]
+labels: [task, urgent]
+notes: In progress
+---
+```
+
+**TaskNotes compatibility**:
+```typescript
+{
+  propertyNames: {
+    status: "complete",  // Legacy TaskNotes name
+    due: "due",
+    projects: "projects",
+    tags: "tags",
+    statusDescription: "statusDescription"
+  }
+}
+```
+
+---
+
+## Phase 2B/2C: Advanced Features (PLANNED)
 
 ### Motivation
 

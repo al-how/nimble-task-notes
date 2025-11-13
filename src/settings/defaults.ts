@@ -12,5 +12,9 @@ export const DEFAULT_SETTINGS: LightweightTasksSettings = {
   apiKey: "",
   propertyNames: {
     status: "taskStatus",
+    due: "due",
+    projects: "projects",
+    tags: "tags",
+    statusDescription: "statusDescription",
   },
 };

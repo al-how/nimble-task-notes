@@ -82,7 +82,7 @@ This plugin is built from scratch with only essential features:
 3. **Modal-based prompts**: Use Obsidian's Modal class instead of CodeMirror widgets
 4. **No checkbox sync**: Interactive widgets show status, but checkboxes don't bidirectionally sync
 5. **HTTP API for MCP**: MCP server calls plugin API instead of direct file access
-6. **Configurable property names**: Task frontmatter properties are configurable in settings (Phase 1: status property only)
+6. **Configurable property names**: ALL task frontmatter properties are configurable in settings (Phase 2A complete)
 
 ## Key Files
 
@@ -110,22 +110,23 @@ This plugin is built from scratch with only essential features:
 
 ## Task Properties Model
 
-**Default Configuration (configurable in settings):**
+**Default Configuration (fully configurable in settings - Phase 2A complete):**
 
 ```yaml
 ---
-taskStatus: false       # Boolean (property name configurable, default: "taskStatus")
-due: 2025-11-08         # YYYY-MM-DD or null
-projects: ["[[Client Alpha]]"]  # Array of wikilinks
-tags: [task]            # Always includes 'task'
-statusDescription: ""   # Free text
+taskStatus: false       # Boolean (property name: "taskStatus" - configurable)
+due: 2025-11-08         # YYYY-MM-DD (property name: "due" - configurable)
+projects: ["[[Client Alpha]]"]  # Array of wikilinks (property name: "projects" - configurable)
+tags: [task]            # Array (property name: "tags" - configurable, always includes 'task')
+statusDescription: ""   # String (property name: "statusDescription" - configurable)
 ---
 ```
 
-**Property Configuration:**
-- The status property name is configurable in settings (default: `taskStatus`)
-- Legacy `complete` property is supported for backward compatibility
-- Future phases will add configuration for other properties
+**Property Configuration (Phase 2A Complete):**
+- ALL task frontmatter property names are configurable in Settings → Property Configuration
+- Default names: `taskStatus`, `due`, `projects`, `tags`, `statusDescription`
+- Backward compatibility: Legacy `complete` property supported as fallback for status
+- Example custom config: Use `done`, `deadline`, `linkedProjects`, `labels`, `notes`
 
 ## Development Workflow
 
