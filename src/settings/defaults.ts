@@ -13,6 +13,7 @@ export const DEFAULT_SETTINGS: LightweightTasksSettings = {
   propertyNames: {
     status: "taskStatus",
     due: "due",
+    completed: "completed",
     projects: "projects",
     tags: "tags",
     statusDescription: "statusDescription",

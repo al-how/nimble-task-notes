@@ -96,6 +96,22 @@ export class LightweightTasksSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
+      .setName("Completion date property name")
+      .setDesc("Name of the property that stores task completion date (YYYY-MM-DD, auto-set when task marked complete)")
+      .addText((text) =>
+        text
+          .setPlaceholder("completed")
+          .setValue(this.plugin.settings.propertyNames.completed)
+          .onChange(async (value) => {
+            const trimmed = value.trim();
+            if (trimmed) {
+              this.plugin.settings.propertyNames.completed = trimmed;
+              await this.plugin.saveSettings();
+            }
+          }),
+      );
+
+    new Setting(containerEl)
       .setName("Projects property name")
       .setDesc("Name of the property that stores project wikilinks (array)")
       .addText((text) =>

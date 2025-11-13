@@ -16,6 +16,9 @@ export interface TaskInfo {
   /** Due date in YYYY-MM-DD format */
   due: string | null;
 
+  /** Completion date in YYYY-MM-DD format */
+  completed: string | null;
+
   /** Associated projects as wikilinks */
   projects: string[];
 
@@ -42,6 +45,9 @@ export interface TaskCreationData {
   /** Due date in YYYY-MM-DD format */
   due?: string | null;
 
+  /** Completion date in YYYY-MM-DD format */
+  completed?: string | null;
+
   /** Associated projects as wikilinks */
   projects?: string[];
 
@@ -60,6 +66,8 @@ export interface PropertyNames {
   status: string;
   /** Name of the due date property (default: "due") */
   due: string;
+  /** Name of the completed date property (default: "completed") */
+  completed: string;
   /** Name of the projects property (default: "projects") */
   projects: string;
   /** Name of the tags property (default: "tags") */

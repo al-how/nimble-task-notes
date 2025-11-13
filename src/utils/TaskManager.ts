@@ -107,6 +107,18 @@ export class TaskManager extends Events {
       }
     }
 
+    // Parse completed date (YYYY-MM-DD string or null) - use configured property name
+    let completed: string | null = null;
+    if (frontmatter[propNames.completed]) {
+      if (typeof frontmatter[propNames.completed] === "string") {
+        if (this.isValidDateString(frontmatter[propNames.completed])) {
+          completed = frontmatter[propNames.completed];
+        }
+      } else if (frontmatter[propNames.completed] instanceof Date) {
+        completed = this.formatDate(frontmatter[propNames.completed]);
+      }
+    }
+
     // Parse projects (array of wikilinks) - use configured property name
     const projects = Array.isArray(frontmatter[propNames.projects])
       ? frontmatter[propNames.projects].filter(
@@ -130,6 +142,7 @@ export class TaskManager extends Events {
       title,
       complete,
       due,
+      completed,
       projects,
       tags,
       statusDescription,

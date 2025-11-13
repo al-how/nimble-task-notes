@@ -97,25 +97,35 @@ export class TaskService {
       const content = await this.app.vault.read(file);
       const { frontmatter, body } = this.parseFrontmatter(content);
 
-      const statusProp = this.plugin.settings.propertyNames.status;
+      const propNames = this.plugin.settings.propertyNames;
+
       if (updates.complete !== undefined) {
-        frontmatter[statusProp] = updates.complete;
+        frontmatter[propNames.status] = updates.complete;
+
+        // Auto-update completion date when status changes
+        if (updates.complete === true) {
+          // Task being marked complete - set completion date to today
+          frontmatter[propNames.completed] = this.formatDateForFrontmatter(new Date());
+        } else if (updates.complete === false) {
+          // Task being marked incomplete - clear completion date
+          frontmatter[propNames.completed] = null;
+        }
       }
       if (updates.due !== undefined) {
-        frontmatter.due = updates.due;
+        frontmatter[propNames.due] = updates.due;
       }
       if (updates.projects !== undefined) {
-        frontmatter.projects = updates.projects;
+        frontmatter[propNames.projects] = updates.projects;
       }
       if (updates.tags !== undefined) {
         const tags = Array.isArray(updates.tags) ? updates.tags : ["task"];
         if (!tags.includes("task")) {
           tags.push("task");
         }
-        frontmatter.tags = tags;
+        frontmatter[propNames.tags] = tags;
       }
       if (updates.statusDescription !== undefined) {
-        frontmatter.statusDescription = updates.statusDescription;
+        frontmatter[propNames.statusDescription] = updates.statusDescription;
       }
 
       const newContent = this.buildFileContent(frontmatter, body);
@@ -222,13 +232,14 @@ export class TaskService {
       tags.push("task");
     }
 
-    const statusProp = this.plugin.settings.propertyNames.status;
+    const propNames = this.plugin.settings.propertyNames;
     return {
-      [statusProp]: data.complete || false,
-      due: data.due || null,
-      projects: data.projects || [],
-      tags,
-      statusDescription: data.statusDescription || "",
+      [propNames.status]: data.complete || false,
+      [propNames.due]: data.due || null,
+      [propNames.completed]: data.completed || null,
+      [propNames.projects]: data.projects || [],
+      [propNames.tags]: tags,
+      [propNames.statusDescription]: data.statusDescription || "",
     };
   }
 
@@ -272,5 +283,15 @@ export class TaskService {
     if (!folder) {
       await this.app.vault.createFolder(normalizedPath);
     }
+  }
+
+  /**
+   * Format Date object to YYYY-MM-DD string for frontmatter
+   */
+  private formatDateForFrontmatter(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   }
 }

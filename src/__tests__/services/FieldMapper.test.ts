@@ -8,6 +8,7 @@ const mockPlugin = {
 		propertyNames: {
 			status: 'taskStatus',
 			due: 'due',
+			completed: 'completed',
 			projects: 'projects',
 			tags: 'tags',
 			statusDescription: 'statusDescription',
@@ -29,6 +30,7 @@ describe('FieldMapper', () => {
 				title: 'MyTask',
 				complete: false,
 				due: '2025-11-15',
+				completed: null,
 				projects: ['[[Project A]]'],
 				tags: ['task', 'urgent'],
 				statusDescription: 'In progress',
@@ -40,6 +42,7 @@ describe('FieldMapper', () => {
 			expect(result).toEqual({
 				taskStatus: false,
 				due: '2025-11-15',
+				completed: null,
 				projects: ['[[Project A]]'],
 				tags: ['task', 'urgent'],
 				statusDescription: 'In progress',
@@ -52,6 +55,7 @@ describe('FieldMapper', () => {
 				title: 'MyTask',
 				complete: true,
 				due: null,
+				completed: '2025-11-13',
 				projects: [],
 				tags: ['task'],
 				statusDescription: '',
@@ -61,6 +65,50 @@ describe('FieldMapper', () => {
 			const result = fieldMapper.mapTaskInfoToFrontmatter(taskInfo);
 
 			expect(result.due).toBeNull();
+			expect(result.completed).toBe('2025-11-13');
+		});
+
+		it('should handle completed date in frontmatter', () => {
+			const taskInfo: TaskInfo = {
+				path: 'Tasks/CompletedTask.md',
+				title: 'CompletedTask',
+				complete: true,
+				due: '2025-11-15',
+				completed: '2025-11-13',
+				projects: [],
+				tags: ['task'],
+				statusDescription: 'Finished',
+				file: undefined as any,
+			};
+
+			const result = fieldMapper.mapTaskInfoToFrontmatter(taskInfo);
+
+			expect(result).toEqual({
+				taskStatus: true,
+				due: '2025-11-15',
+				completed: '2025-11-13',
+				projects: [],
+				tags: ['task'],
+				statusDescription: 'Finished',
+			});
+		});
+
+		it('should handle null completed date', () => {
+			const taskInfo: TaskInfo = {
+				path: 'Tasks/IncompleteTask.md',
+				title: 'IncompleteTask',
+				complete: false,
+				due: '2025-11-15',
+				completed: null,
+				projects: [],
+				tags: ['task'],
+				statusDescription: '',
+				file: undefined as any,
+			};
+
+			const result = fieldMapper.mapTaskInfoToFrontmatter(taskInfo);
+
+			expect(result.completed).toBeNull();
 		});
 	});
 
@@ -201,6 +249,64 @@ describe('FieldMapper', () => {
 
 			expect(result?.complete).toBe(true);
 		});
+
+		it('should parse completed date from frontmatter', () => {
+			const frontmatter = {
+				tags: ['task'],
+				taskStatus: true,
+				completed: '2025-11-13',
+			};
+
+			const result = fieldMapper.mapFrontmatterToTaskInfo(
+				frontmatter,
+				'test.md'
+			);
+
+			expect(result?.completed).toBe('2025-11-13');
+		});
+
+		it('should handle null completed date in frontmatter', () => {
+			const frontmatter = {
+				tags: ['task'],
+				taskStatus: false,
+				completed: null,
+			};
+
+			const result = fieldMapper.mapFrontmatterToTaskInfo(
+				frontmatter,
+				'test.md'
+			);
+
+			expect(result?.completed).toBeNull();
+		});
+
+		it('should convert Date object to YYYY-MM-DD string for completed date', () => {
+			const frontmatter = {
+				tags: ['task'],
+				completed: new Date(2025, 10, 13), // Month is 0-indexed (November = 10)
+			};
+
+			const result = fieldMapper.mapFrontmatterToTaskInfo(
+				frontmatter,
+				'test.md'
+			);
+
+			expect(result?.completed).toBe('2025-11-13');
+		});
+
+		it('should handle missing completed date (default to null)', () => {
+			const frontmatter = {
+				tags: ['task'],
+				taskStatus: false,
+			};
+
+			const result = fieldMapper.mapFrontmatterToTaskInfo(
+				frontmatter,
+				'test.md'
+			);
+
+			expect(result?.completed).toBeNull();
+		});
 	});
 
 	describe('validateTaskFrontmatter', () => {
@@ -303,6 +409,42 @@ describe('FieldMapper', () => {
 
 			expect(fieldMapper.validateTaskFrontmatter(frontmatter)).toBe(true);
 		});
+
+		it('should accept frontmatter with valid completed date string', () => {
+			const frontmatter = { tags: ['task'], completed: '2025-11-13' };
+
+			expect(fieldMapper.validateTaskFrontmatter(frontmatter)).toBe(true);
+		});
+
+		it('should accept frontmatter with null completed date', () => {
+			const frontmatter = { tags: ['task'], completed: null };
+
+			expect(fieldMapper.validateTaskFrontmatter(frontmatter)).toBe(true);
+		});
+
+		it('should accept frontmatter with Date object for completed', () => {
+			const frontmatter = { tags: ['task'], completed: new Date(2025, 10, 13) };
+
+			expect(fieldMapper.validateTaskFrontmatter(frontmatter)).toBe(true);
+		});
+
+		it('should reject frontmatter with invalid completed date string', () => {
+			const frontmatter = { tags: ['task'], completed: 'invalid-date' };
+
+			expect(fieldMapper.validateTaskFrontmatter(frontmatter)).toBe(false);
+		});
+
+		it('should reject frontmatter with invalid completed date type', () => {
+			const frontmatter = { tags: ['task'], completed: 12345 };
+
+			expect(fieldMapper.validateTaskFrontmatter(frontmatter)).toBe(false);
+		});
+
+		it('should accept frontmatter with missing completed', () => {
+			const frontmatter = { tags: ['task'] };
+
+			expect(fieldMapper.validateTaskFrontmatter(frontmatter)).toBe(true);
+		});
 	});
 
 	describe('createDefaultFrontmatter', () => {
@@ -312,6 +454,7 @@ describe('FieldMapper', () => {
 			expect(result).toEqual({
 				taskStatus: false,
 				due: null,
+				completed: null,
 				projects: [],
 				tags: ['task'],
 				statusDescription: '',
@@ -322,6 +465,7 @@ describe('FieldMapper', () => {
 			const partial = {
 				complete: true,
 				due: '2025-11-15',
+				completed: '2025-11-13',
 				projects: ['[[Project A]]'],
 				tags: ['task', 'urgent'],
 				statusDescription: 'Done',
@@ -332,6 +476,7 @@ describe('FieldMapper', () => {
 			expect(result).toEqual({
 				taskStatus: true,
 				due: '2025-11-15',
+				completed: '2025-11-13',
 				projects: ['[[Project A]]'],
 				tags: ['task', 'urgent'],
 				statusDescription: 'Done',
@@ -365,6 +510,7 @@ describe('FieldMapper', () => {
 			mockPlugin.settings.propertyNames = {
 				status: 'taskStatus',
 				due: 'due',
+				completed: 'completed',
 				projects: 'projects',
 				tags: 'tags',
 				statusDescription: 'statusDescription',
@@ -376,6 +522,7 @@ describe('FieldMapper', () => {
 			mockPlugin.settings.propertyNames = {
 				status: 'done',
 				due: 'deadline',
+				completed: 'completedOn',
 				projects: 'linkedProjects',
 				tags: 'labels',
 				statusDescription: 'notes',
@@ -386,6 +533,7 @@ describe('FieldMapper', () => {
 				title: 'MyTask',
 				complete: false,
 				due: '2025-11-15',
+				completed: null,
 				projects: ['[[Project A]]'],
 				tags: ['task', 'urgent'],
 				statusDescription: 'In progress',
@@ -397,6 +545,7 @@ describe('FieldMapper', () => {
 			expect(result).toEqual({
 				done: false,
 				deadline: '2025-11-15',
+				completedOn: null,
 				linkedProjects: ['[[Project A]]'],
 				labels: ['task', 'urgent'],
 				notes: 'In progress',
@@ -408,6 +557,7 @@ describe('FieldMapper', () => {
 			mockPlugin.settings.propertyNames = {
 				status: 'done',
 				due: 'deadline',
+				completed: 'completedOn',
 				projects: 'linkedProjects',
 				tags: 'labels',
 				statusDescription: 'notes',
@@ -416,6 +566,7 @@ describe('FieldMapper', () => {
 			const frontmatter = {
 				done: true,
 				deadline: '2025-11-15',
+				completedOn: '2025-11-13',
 				linkedProjects: ['[[Project A]]', '[[Project B]]'],
 				labels: ['task', 'urgent'],
 				notes: 'Almost done',
@@ -429,6 +580,7 @@ describe('FieldMapper', () => {
 			expect(result).not.toBeNull();
 			expect(result?.complete).toBe(true);
 			expect(result?.due).toBe('2025-11-15');
+			expect(result?.completed).toBe('2025-11-13');
 			expect(result?.projects).toEqual(['[[Project A]]', '[[Project B]]']);
 			expect(result?.tags).toEqual(['task', 'urgent']);
 			expect(result?.statusDescription).toBe('Almost done');
@@ -439,6 +591,7 @@ describe('FieldMapper', () => {
 			mockPlugin.settings.propertyNames = {
 				status: 'done',
 				due: 'deadline',
+				completed: 'completedOn',
 				projects: 'linkedProjects',
 				tags: 'labels',
 				statusDescription: 'notes',
@@ -447,6 +600,7 @@ describe('FieldMapper', () => {
 			const frontmatter = {
 				done: false,
 				deadline: '2025-11-15',
+				completedOn: null,
 				linkedProjects: ['[[Project A]]'],
 				labels: ['task'],
 				notes: 'Working on it',
@@ -470,6 +624,7 @@ describe('FieldMapper', () => {
 			mockPlugin.settings.propertyNames = {
 				status: 'done',
 				due: 'deadline',
+				completed: 'completedOn',
 				projects: 'linkedProjects',
 				tags: 'labels',
 				statusDescription: 'notes',
@@ -480,6 +635,7 @@ describe('FieldMapper', () => {
 			expect(result).toEqual({
 				done: false,
 				deadline: null,
+				completedOn: null,
 				linkedProjects: [],
 				labels: ['task'],
 				notes: '',
@@ -491,6 +647,7 @@ describe('FieldMapper', () => {
 			mockPlugin.settings.propertyNames = {
 				status: 'done',
 				due: 'due', // Keep default
+				completed: 'completed', // Keep default
 				projects: 'linkedProjects',
 				tags: 'tags', // Keep default
 				statusDescription: 'statusDescription', // Keep default
@@ -501,6 +658,7 @@ describe('FieldMapper', () => {
 				title: 'MyTask',
 				complete: true,
 				due: '2025-11-15',
+				completed: '2025-11-13',
 				projects: ['[[Project A]]'],
 				tags: ['task'],
 				statusDescription: 'Complete',
@@ -512,6 +670,7 @@ describe('FieldMapper', () => {
 			expect(result).toEqual({
 				done: true,
 				due: '2025-11-15',
+				completed: '2025-11-13',
 				linkedProjects: ['[[Project A]]'],
 				tags: ['task'],
 				statusDescription: 'Complete',
@@ -523,6 +682,7 @@ describe('FieldMapper', () => {
 			mockPlugin.settings.propertyNames = {
 				status: 'complete', // TaskNotes used "complete"
 				due: 'due',
+				completed: 'completed',
 				projects: 'projects',
 				tags: 'tags',
 				statusDescription: 'statusDescription',
@@ -533,6 +693,7 @@ describe('FieldMapper', () => {
 				title: 'MyTask',
 				complete: true,
 				due: null,
+				completed: '2025-11-13',
 				projects: [],
 				tags: ['task'],
 				statusDescription: '',
@@ -542,6 +703,7 @@ describe('FieldMapper', () => {
 			const result = fieldMapper.mapTaskInfoToFrontmatter(taskInfo);
 
 			expect(result.complete).toBe(true);
+			expect(result.completed).toBe('2025-11-13');
 			expect(result.taskStatus).toBeUndefined();
 		});
 

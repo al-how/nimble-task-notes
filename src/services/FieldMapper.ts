@@ -22,6 +22,7 @@ export class FieldMapper {
     return {
       [propNames.status]: task.complete,
       [propNames.due]: task.due,
+      [propNames.completed]: task.completed,
       [propNames.projects]: task.projects,
       [propNames.tags]: task.tags,
       [propNames.statusDescription]: task.statusDescription,
@@ -55,6 +56,18 @@ export class FieldMapper {
       }
     }
 
+    // Completed date: use configured property name
+    let completed: string | null = null;
+    if (frontmatter[propNames.completed]) {
+      if (typeof frontmatter[propNames.completed] === "string") {
+        if (this.isValidDateString(frontmatter[propNames.completed])) {
+          completed = frontmatter[propNames.completed];
+        }
+      } else if (frontmatter[propNames.completed] instanceof Date) {
+        completed = this.formatDate(frontmatter[propNames.completed]);
+      }
+    }
+
     // Projects: use configured property name
     const projects = Array.isArray(frontmatter[propNames.projects])
       ? frontmatter[propNames.projects].filter(
@@ -81,6 +94,7 @@ export class FieldMapper {
       title,
       complete,
       due,
+      completed,
       projects,
       tags,
       statusDescription,
@@ -120,6 +134,17 @@ export class FieldMapper {
       }
     }
 
+    // Completed date validation: use configured property name
+    if (frontmatter[propNames.completed] !== undefined && frontmatter[propNames.completed] !== null) {
+      if (typeof frontmatter[propNames.completed] === "string") {
+        if (!this.isValidDateString(frontmatter[propNames.completed])) {
+          return false;
+        }
+      } else if (!(frontmatter[propNames.completed] instanceof Date)) {
+        return false;
+      }
+    }
+
     // Projects validation: use configured property name
     if (
       frontmatter[propNames.projects] !== undefined &&
@@ -153,6 +178,7 @@ export class FieldMapper {
     return {
       [propNames.status]: partial.complete || false,
       [propNames.due]: partial.due || null,
+      [propNames.completed]: partial.completed || null,
       [propNames.projects]: partial.projects || [],
       [propNames.tags]: tags,
       [propNames.statusDescription]: partial.statusDescription || "",

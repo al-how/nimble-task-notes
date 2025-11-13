@@ -53,6 +53,13 @@ export default class LightweightTasksPlugin extends Plugin {
       },
     });
 
+    // Add metadata change listener to auto-update completion date
+    this.registerEvent(
+      this.app.metadataCache.on("changed", async (file) => {
+        await this.handleMetadataChange(file);
+      })
+    );
+
     const loadTime = (performance.now() - startTime).toFixed(2);
     console.log(`Lightweight Task Manager loaded in ${loadTime}ms`);
     console.log(`Registered services: ${this.container.getRegisteredServices().join(", ")}`);
@@ -100,6 +107,95 @@ export default class LightweightTasksPlugin extends Plugin {
    */
   getService<T>(key: string): T {
     return this.container.get<T>(key);
+  }
+
+  /**
+   * Handle metadata changes to auto-update completion date.
+   * When taskStatus changes, automatically set/clear the completed date.
+   */
+  private async handleMetadataChange(file: any): Promise<void> {
+    try {
+      const taskManager = this.container.get<TaskManager>("taskManager");
+
+      // Check if this is a task file
+      const cache = this.app.metadataCache.getFileCache(file);
+      if (!cache?.frontmatter) return;
+
+      if (!taskManager.isTaskFile(cache.frontmatter)) return;
+
+      const propNames = this.settings.propertyNames;
+      const statusValue = cache.frontmatter[propNames.status] ?? cache.frontmatter.complete;
+      const currentCompleted = cache.frontmatter[propNames.completed];
+
+      // Determine what the completed date should be
+      let shouldHaveCompletedDate = statusValue === true;
+      let needsUpdate = false;
+
+      if (shouldHaveCompletedDate && !currentCompleted) {
+        // Task is complete but missing completion date - add it
+        needsUpdate = true;
+      } else if (!shouldHaveCompletedDate && currentCompleted) {
+        // Task is incomplete but has completion date - remove it
+        needsUpdate = true;
+      }
+
+      if (needsUpdate) {
+        // Read the file and update the frontmatter directly
+        const content = await this.app.vault.read(file);
+        const { frontmatter, body } = this.parseFrontmatter(content);
+
+        if (shouldHaveCompletedDate) {
+          // Add today's date
+          frontmatter[propNames.completed] = this.formatDateForFrontmatter(new Date());
+        } else {
+          // Clear the date
+          frontmatter[propNames.completed] = null;
+        }
+
+        // Write back to file
+        const newContent = this.buildFileContent(frontmatter, body);
+        await this.app.vault.modify(file, newContent);
+      }
+    } catch (error) {
+      console.error("Error handling metadata change:", error);
+    }
+  }
+
+  private parseFrontmatter(content: string): { frontmatter: Record<string, any>; body: string } {
+    const frontmatterRegex = /^---\n([\s\S]*?)\n---\n\n?([\s\S]*)$/;
+    const match = content.match(frontmatterRegex);
+
+    if (match) {
+      try {
+        // Import YAML at runtime
+        const YAML = require("yaml");
+        const frontmatter = YAML.parse(match[1]);
+        return {
+          frontmatter: frontmatter || {},
+          body: match[2] || "",
+        };
+      } catch (error) {
+        console.error("Failed to parse frontmatter:", error);
+      }
+    }
+
+    return {
+      frontmatter: {},
+      body: content,
+    };
+  }
+
+  private buildFileContent(frontmatter: Record<string, any>, body: string): string {
+    const YAML = require("yaml");
+    const yaml = YAML.stringify(frontmatter);
+    return `---\n${yaml}---\n\n${body}`;
+  }
+
+  private formatDateForFrontmatter(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   }
 
   onunload() {
