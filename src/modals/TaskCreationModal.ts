@@ -2,6 +2,7 @@ import { App, Modal, Notice, Setting } from 'obsidian';
 import type LightweightTasksPlugin from '../main';
 import type { CheckboxData, TaskCreationModalResult } from '../types';
 import type { NaturalLanguageParser } from '../services/NaturalLanguageParser';
+import { ProjectInputSuggest } from './ProjectInputSuggest';
 
 /**
  * Modal for gathering task metadata during checkbox-to-task conversion.
@@ -18,6 +19,11 @@ export class TaskCreationModal extends Modal {
 	private datePreview: HTMLElement;
 	private projectInput: HTMLInputElement;
 	private errorElement: HTMLElement;
+
+	// Project chips UI
+	private selectedProjects: string[] = [];
+	private chipContainer: HTMLElement;
+	private projectSuggest: ProjectInputSuggest | null = null;
 
 	constructor(
 		app: App,
@@ -105,23 +111,86 @@ export class TaskCreationModal extends Modal {
 	 * Set up project input field
 	 */
 	private setupProjectField(container: HTMLElement): void {
-		new Setting(container)
+		const setting = new Setting(container)
 			.setName('Projects')
-			.setDesc('Comma-separated wikilinks (e.g., [[Project A]], [[Project B]])')
-			.addText((text) => {
-				this.projectInput = text.inputEl;
-				text.setPlaceholder('e.g., [[Project Name]]');
+			.setDesc('Type to search and select projects');
 
-				// Handle Enter key to submit
-				text.inputEl.addEventListener('keydown', (evt) => {
-					if (evt.key === 'Enter') {
-						evt.preventDefault();
-						this.handleSubmit();
-					}
-				});
+		// Create text input with autocomplete
+		setting.addText((text) => {
+			this.projectInput = text.inputEl;
+			text.setPlaceholder('Start typing project name...');
 
-				return text;
+			// Initialize AbstractInputSuggest if feature enabled
+			if (this.plugin.settings.enableProjectSuggestions) {
+				this.projectSuggest = new ProjectInputSuggest(
+					this.app,
+					text.inputEl,
+					this.plugin,
+					(project) => this.addProject(project)
+				);
+			}
+
+			// Handle Enter key to submit form
+			text.inputEl.addEventListener('keydown', (evt) => {
+				if (evt.key === 'Enter') {
+					evt.preventDefault();
+					this.handleSubmit();
+				}
 			});
+
+			return text;
+		});
+
+		// Create chip container below input
+		this.chipContainer = container.createDiv('project-chips');
+	}
+
+	/**
+	 * Add project chip to UI and selected list
+	 */
+	private addProject(projectName: string): void {
+		const wikilink = `[[${projectName}]]`;
+
+		// Prevent duplicates
+		if (this.selectedProjects.includes(wikilink)) {
+			new Notice(`${projectName} is already added`);
+			return;
+		}
+
+		this.selectedProjects.push(wikilink);
+		this.renderChip(projectName, wikilink);
+	}
+
+	/**
+	 * Render a chip element for a selected project
+	 */
+	private renderChip(displayName: string, wikilink: string): void {
+		const chip = this.chipContainer.createDiv('project-chip');
+
+		chip.createSpan({
+			text: displayName,
+			cls: 'project-chip-text'
+		});
+
+		const removeBtn = chip.createSpan({
+			text: '×',
+			cls: 'project-chip-remove'
+		});
+
+		removeBtn.addEventListener('click', () => {
+			this.removeProject(wikilink);
+			chip.remove();
+		});
+	}
+
+	/**
+	 * Remove project from selected list
+	 */
+	private removeProject(wikilink: string): void {
+		const index = this.selectedProjects.indexOf(wikilink);
+		if (index > -1) {
+			this.selectedProjects.splice(index, 1);
+		}
 	}
 
 	/**
@@ -225,9 +294,16 @@ export class TaskCreationModal extends Modal {
 
 	/**
 	 * Extract project wikilinks from input string
+	 * Returns selected projects from chips (if feature enabled) or parses text input
 	 * Handles: [[Project A]], [[Project B]] or just "Project A, Project B"
 	 */
-	private extractProjects(input: string): string[] {
+	private extractProjects(input?: string): string[] {
+		// If project suggestions enabled, return selected projects from chips
+		if (this.plugin.settings.enableProjectSuggestions) {
+			return this.selectedProjects;
+		}
+
+		// Fallback to manual text parsing
 		if (!input) {
 			return [];
 		}
@@ -286,6 +362,11 @@ export class TaskCreationModal extends Modal {
 	onClose(): void {
 		const { contentEl } = this;
 		contentEl.empty();
+
+		// Cleanup suggest instance
+		if (this.projectSuggest) {
+			this.projectSuggest.close();
+		}
 
 		// If modal was closed without submit/cancel, resolve with null
 		if (this.resolvePromise) {

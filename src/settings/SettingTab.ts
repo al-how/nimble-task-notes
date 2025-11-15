@@ -207,6 +207,81 @@ export class LightweightTasksSettingTab extends PluginSettingTab {
           }),
       );
 
+    // Project Suggestions
+    containerEl.createEl("h3", { text: "Project Suggestions" });
+
+    // Master toggle
+    new Setting(containerEl)
+      .setName("Enable project suggestions")
+      .setDesc("Show project picker when creating tasks from checkboxes")
+      .addToggle((toggle) => {
+        toggle
+          .setValue(this.plugin.settings.enableProjectSuggestions)
+          .onChange(async (value) => {
+            this.plugin.settings.enableProjectSuggestions = value;
+            await this.plugin.saveSettings();
+            // Refresh display to show/hide other settings
+            this.display();
+          });
+      });
+
+    // Only show these settings if feature is enabled
+    if (this.plugin.settings.enableProjectSuggestions) {
+
+      new Setting(containerEl)
+        .setName("Projects source folder")
+        .setDesc("Folder containing project files (leave empty for vault root)")
+        .addText((text) => {
+          text
+            .setPlaceholder("e.g., Work/01-Projects")
+            .setValue(this.plugin.settings.projectsSourceFolder)
+            .onChange(async (value) => {
+              this.plugin.settings.projectsSourceFolder = value;
+              await this.plugin.saveSettings();
+            });
+        });
+
+      new Setting(containerEl)
+        .setName("Projects tag")
+        .setDesc("Tag that identifies project files (without #)")
+        .addText((text) => {
+          text
+            .setPlaceholder("e.g., project")
+            .setValue(this.plugin.settings.projectsRequiredTag)
+            .onChange(async (value) => {
+              this.plugin.settings.projectsRequiredTag = value;
+              await this.plugin.saveSettings();
+            });
+        });
+
+      new Setting(containerEl)
+        .setName("Status property name")
+        .setDesc("Frontmatter property containing status value")
+        .addText((text) => {
+          text
+            .setPlaceholder("e.g., status")
+            .setValue(this.plugin.settings.projectsStatusProperty)
+            .onChange(async (value) => {
+              this.plugin.settings.projectsStatusProperty = value;
+              await this.plugin.saveSettings();
+            });
+        });
+
+      new Setting(containerEl)
+        .setName("Excluded status values")
+        .setDesc("Comma-separated status values to exclude from suggestions")
+        .addText((text) => {
+          text
+            .setPlaceholder("e.g., deprioritized, completed")
+            .setValue(this.plugin.settings.projectsExcludedStatuses.join(', '))
+            .onChange(async (value) => {
+              this.plugin.settings.projectsExcludedStatuses =
+                value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+              await this.plugin.saveSettings();
+            });
+        });
+    }
+
     // HTTP API (MCP Integration)
     containerEl.createEl("h3", { text: "HTTP API (for MCP Integration)" });
 

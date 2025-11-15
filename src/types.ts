@@ -109,6 +109,21 @@ export interface LightweightTasksSettings {
 
   /** Configurable property names for task frontmatter */
   propertyNames: PropertyNames;
+
+  /** Enable project suggestions in task creation modal */
+  enableProjectSuggestions: boolean;
+
+  /** Folder containing project files (empty = vault root) */
+  projectsSourceFolder: string;
+
+  /** Tag that identifies project files (without #) */
+  projectsRequiredTag: string;
+
+  /** Frontmatter property containing status value */
+  projectsStatusProperty: string;
+
+  /** Status values to exclude from suggestions */
+  projectsExcludedStatuses: string[];
 }
 
 /**

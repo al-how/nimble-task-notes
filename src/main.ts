@@ -10,10 +10,11 @@ import { ICSSubscriptionService } from "./services/ICSSubscriptionService";
 import { CalendarImportService } from "./services/CalendarImportService";
 import { NaturalLanguageParser } from "./services/NaturalLanguageParser";
 import { TaskConversionService } from "./services/TaskConversionService";
+import { ProjectDiscoveryService } from "./services/ProjectDiscoveryService";
 
 export default class LightweightTasksPlugin extends Plugin {
   settings: LightweightTasksSettings;
-  private container: ServiceContainer;
+  container: ServiceContainer;
 
   async onload() {
     const startTime = performance.now();
@@ -99,6 +100,9 @@ export default class LightweightTasksPlugin extends Plugin {
     this.container.register("nlpParser", () => new NaturalLanguageParser());
 
     this.container.register("taskConversionService", () => new TaskConversionService(this));
+
+    // Project discovery service - Lazy loaded when project suggestions used
+    this.container.register("projectDiscovery", () => new ProjectDiscoveryService(this.app, this.settings));
   }
 
   /**

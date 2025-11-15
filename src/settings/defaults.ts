@@ -18,4 +18,9 @@ export const DEFAULT_SETTINGS: LightweightTasksSettings = {
     tags: "tags",
     statusDescription: "statusDescription",
   },
+  enableProjectSuggestions: false,
+  projectsSourceFolder: "",
+  projectsRequiredTag: "project",
+  projectsStatusProperty: "status",
+  projectsExcludedStatuses: ["deprioritized", "completed"],
 };
