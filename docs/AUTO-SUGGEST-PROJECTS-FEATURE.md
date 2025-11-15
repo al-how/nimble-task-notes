@@ -36,18 +36,18 @@ Users should be able to configure:
 1. User types `- [ ] Review proposal` in a note
 2. User presses Ctrl+Enter (Cmd+Enter on Mac)
 3. TaskCreationModal opens with two fields: Due Date and Projects
-4. User clicks "Add Project" button
-5. ProjectSuggestModal opens showing filtered projects:
+4. User tabs to Projects field and starts typing "alpha"
+5. Inline autocomplete dropdown appears showing filtered projects:
    - "Client Alpha"
-   - "Website Redesign"
-   - "Q4 Planning"
-6. User types "alpha" → fuzzy match highlights "Client Alpha"
-7. User presses Enter → chip appears: `[Client Alpha] ×`
-8. User clicks "Add Project" again → selects "Website Redesign"
-9. Two chips now visible: `[Client Alpha] ×` `[Website Redesign] ×`
-10. User clicks × on "Client Alpha" chip → removed
-11. User fills due date, clicks "Create Task"
-12. Task file created with `projects: ["[[Website Redesign]]"]`
+   - "Alpha Testing Project"
+6. User presses ↓ arrow to navigate → highlights "Client Alpha"
+7. User presses Enter → chip appears: `[Client Alpha] ×`, input clears
+8. User starts typing "website" → dropdown shows "Website Redesign"
+9. User presses Enter → second chip appears
+10. Two chips now visible: `[Client Alpha] ×` `[Website Redesign] ×`
+11. User clicks × on "Client Alpha" chip → removed
+12. User fills due date, presses Enter to submit
+13. Task file created with `projects: ["[[Website Redesign]]"]`
 
 ---
 
@@ -58,11 +58,12 @@ Users should be able to configure:
 **Component Structure**:
 ```
 TaskCreationModal (enhanced)
-  ├─ "Add Project" button
-  ├─ Chip container div
-  └─ Opens ProjectSuggestModal
-       ├─ Uses FuzzySuggestModal from Obsidian API
-       └─ Gets project list from ProjectDiscoveryService
+  ├─ Projects text input (TextComponent)
+  ├─ ProjectInputSuggest (attached to input)
+  │    ├─ Extends AbstractInputSuggest from Obsidian API
+  │    ├─ Shows inline dropdown as user types
+  │    └─ Gets project list from ProjectDiscoveryService
+  └─ Chip container div (displays selected projects)
 
 ProjectDiscoveryService (new)
   ├─ Reads vault files
@@ -163,43 +164,64 @@ class ProjectDiscoveryService {
 - Empty source folder setting → search entire vault
 - Invalid folder path → search entire vault, log warning
 
-#### 2. `src/modals/ProjectSuggestModal.ts` (~60 lines)
+#### 2. `src/modals/ProjectInputSuggest.ts` (~60 lines)
 
-**Purpose**: Fuzzy-searchable modal for project selection
+**Purpose**: Inline autocomplete for project selection as user types
 
 **Implementation**:
 ```typescript
-import { App, FuzzySuggestModal } from 'obsidian';
+import { AbstractInputSuggest, App } from 'obsidian';
+import type LightweightTasksPlugin from '../main';
+import type { ProjectDiscoveryService } from '../services/ProjectDiscoveryService';
 
-export class ProjectSuggestModal extends FuzzySuggestModal<string> {
+export class ProjectInputSuggest extends AbstractInputSuggest<string> {
+  private projectDiscovery: ProjectDiscoveryService;
+  private onSelectCallback: (project: string) => void;
+
   constructor(
     app: App,
-    private availableProjects: string[],
-    private onSelectProject: (project: string) => void
+    inputEl: HTMLInputElement,
+    plugin: LightweightTasksPlugin,
+    onSelectCallback: (project: string) => void
   ) {
-    super(app);
-    this.setPlaceholder('Search for a project...');
+    super(app, inputEl);
+    this.projectDiscovery = plugin.getService('projectDiscovery');
+    this.onSelectCallback = onSelectCallback;
   }
 
-  getItems(): string[] {
-    return this.availableProjects;
+  getSuggestions(inputStr: string): string[] {
+    const allProjects = this.projectDiscovery.getAvailableProjects();
+
+    if (!inputStr || inputStr.trim() === '') {
+      return allProjects; // Show all if empty
+    }
+
+    // Filter by typed characters (case-insensitive contains match)
+    const lower = inputStr.toLowerCase();
+    return allProjects.filter(project =>
+      project.toLowerCase().includes(lower)
+    );
   }
 
-  getItemText(item: string): string {
-    return item;
+  renderSuggestion(project: string, el: HTMLElement): void {
+    el.setText(project);
   }
 
-  onChooseItem(item: string): void {
-    this.onSelectProject(item);
+  selectSuggestion(project: string, evt: MouseEvent | KeyboardEvent): void {
+    this.onSelectCallback(project);
+    // Clear input and close dropdown after selection
+    this.inputEl.value = '';
+    this.close();
   }
 }
 ```
 
 **Features**:
-- Built-in fuzzy matching (no manual filtering needed)
+- Extends Obsidian's `AbstractInputSuggest` API
+- Inline dropdown (no separate modal)
+- Filters as user types (case-insensitive substring match)
 - Keyboard navigation (↑↓ to navigate, Enter to select, Esc to cancel)
-- Search highlighting
-- Placeholder text
+- Auto-clears input after selection (ready for next project)
 
 ### Files to Modify
 
@@ -211,6 +233,8 @@ export class ProjectSuggestModal extends FuzzySuggestModal<string> {
 ```typescript
 private selectedProjects: string[] = [];
 private chipContainer: HTMLElement;
+private projectSuggest: ProjectInputSuggest | null = null;
+private projectInput: HTMLInputElement;
 ```
 
 **Replace `setupProjectField()` method**:
@@ -218,51 +242,41 @@ private chipContainer: HTMLElement;
 private setupProjectField(container: HTMLElement): void {
   const setting = new Setting(container)
     .setName('Projects')
-    .setDesc('Click "Add Project" to select from your vault');
+    .setDesc('Type to search and select projects');
 
-  // Add "Add Project" button
-  setting.addButton((button) => {
-    button
-      .setButtonText('Add Project')
-      .setCta()
-      .onClick(() => {
-        this.openProjectSuggestModal();
-      });
+  // Create text input with autocomplete
+  setting.addText((text) => {
+    this.projectInput = text.inputEl;
+    text.setPlaceholder('Start typing project name...');
+
+    // Initialize AbstractInputSuggest if feature enabled
+    if (this.plugin.settings.enableProjectSuggestions) {
+      this.projectSuggest = new ProjectInputSuggest(
+        this.app,
+        text.inputEl,
+        this.plugin,
+        (project) => this.addProject(project)
+      );
+    }
+
+    // Handle Enter key to submit form (only if not selecting from suggestions)
+    text.inputEl.addEventListener('keydown', (evt) => {
+      if (evt.key === 'Enter' && !this.projectSuggest?.isOpen) {
+        evt.preventDefault();
+        this.handleSubmit();
+      }
+    });
+
+    return text;
   });
 
-  // Create chip container
+  // Create chip container below input
   this.chipContainer = container.createDiv('project-chips');
 }
 ```
 
 **Add New Methods**:
 ```typescript
-/**
- * Open fuzzy suggest modal for project selection
- */
-private openProjectSuggestModal(): void {
-  if (!this.plugin.settings.enableProjectSuggestions) {
-    // Fallback: show notice if feature disabled
-    new Notice('Project suggestions are disabled in settings');
-    return;
-  }
-
-  const projectDiscovery = this.plugin.getService<ProjectDiscoveryService>('projectDiscovery');
-  const availableProjects = projectDiscovery.getAvailableProjects();
-
-  if (availableProjects.length === 0) {
-    new Notice('No eligible projects found. Check your project suggestion settings.');
-    return;
-  }
-
-  const modal = new ProjectSuggestModal(
-    this.app,
-    availableProjects,
-    (project) => this.addProject(project)
-  );
-  modal.open();
-}
-
 /**
  * Add project chip to UI and selected list
  */
@@ -318,6 +332,21 @@ private extractProjects(): string[] {
   // Simply return the selected projects array
   // (already formatted as wikilinks)
   return this.selectedProjects;
+}
+```
+
+**Add cleanup in `onClose()` method**:
+```typescript
+onClose(): void {
+  const { contentEl } = this;
+  contentEl.empty();
+
+  // Cleanup suggest instance
+  if (this.projectSuggest) {
+    this.projectSuggest.close();
+  }
+
+  // ... rest of existing cleanup
 }
 ```
 
@@ -503,7 +532,7 @@ Add chip styling:
 | File | Type | Estimated Lines |
 |------|------|-----------------|
 | `ProjectDiscoveryService.ts` | New | ~120 |
-| `ProjectSuggestModal.ts` | New | ~60 |
+| `ProjectInputSuggest.ts` | New | ~60 |
 | `TaskCreationModal.ts` | Modified | +100 |
 | `SettingTab.ts` | Modified | +70 |
 | `types.ts` | Modified | +15 |
@@ -515,8 +544,10 @@ Add chip styling:
 **Budget Check**:
 - Current codebase: ~2,660 lines
 - Remaining budget: ~1,840 lines
-- This feature: ~410 lines
+- This feature: ~410 lines (inline autocomplete saves ~0 lines vs modal approach)
 - After implementation: ~1,430 lines remaining ✅
+
+**Note**: Inline autocomplete approach uses AbstractInputSuggest instead of FuzzySuggestModal, resulting in similar line count but better UX.
 
 ---
 
@@ -536,22 +567,25 @@ Add chip styling:
    - ✅ Works with vault root (empty folder setting)
 
 2. **TaskCreationModal (Chip UI)**:
-   - ✅ "Add Project" button opens suggest modal
-   - ✅ Adding project creates chip in UI
+   - ✅ Typing in Projects field shows inline autocomplete dropdown
+   - ✅ Dropdown filters projects as user types
+   - ✅ Selecting project creates chip in UI
    - ✅ Chip displays correct project name
    - ✅ × button removes chip from UI and array
    - ✅ Prevents duplicate project additions
-   - ✅ Multiple chips can be added
+   - ✅ Multiple chips can be added sequentially
+   - ✅ Input clears after each selection
    - ✅ extractProjects() returns correct wikilink array
-   - ✅ Shows notice when no projects found
-   - ✅ Shows notice when feature disabled
+   - ✅ Works as plain text field when feature disabled
 
-3. **ProjectSuggestModal**:
-   - ✅ Displays all available projects
-   - ✅ Fuzzy search works correctly
-   - ✅ Selecting project calls callback
-   - ✅ Esc closes modal without selection
+3. **ProjectInputSuggest**:
+   - ✅ Displays all available projects when input empty
+   - ✅ Filters by substring match (case-insensitive)
+   - ✅ Selecting project calls callback and clears input
+   - ✅ Esc closes dropdown without selection
    - ✅ Enter key selects highlighted item
+   - ✅ ↑↓ arrow keys navigate suggestions
+   - ✅ Dropdown closes after selection
 
 ### Integration Testing
 
@@ -560,9 +594,10 @@ Add chip styling:
    - ✅ Enable project suggestions in settings
    - ✅ Configure folder, tag, status filters
    - ✅ Convert checkbox to task (Ctrl+Enter)
-   - ✅ Click "Add Project" button
-   - ✅ Select multiple projects from suggest modal
-   - ✅ Remove one project chip
+   - ✅ Tab to Projects field, start typing project name
+   - ✅ Select project from inline dropdown (Enter key)
+   - ✅ Add second project by typing again
+   - ✅ Remove one project chip via × button
    - ✅ Complete task creation
    - ✅ Verify task file has correct projects in frontmatter
 
@@ -574,11 +609,14 @@ Add chip styling:
    - ✅ Settings persist after plugin reload
 
 3. **Edge Cases**:
-   - ✅ Feature disabled → "Add Project" shows notice
-   - ✅ No matching projects → modal shows notice
+   - ✅ Feature disabled → Projects field works as plain text input
+   - ✅ No matching projects → dropdown shows empty
+   - ✅ Typing non-matching text → dropdown shows no results
    - ✅ Invalid folder path → searches entire vault
-   - ✅ Project file deleted → removed from suggestions on next open
+   - ✅ Project file deleted → removed from suggestions on next use
    - ✅ Creating task with no projects selected → works normally
+   - ✅ Enter key with dropdown closed → submits form
+   - ✅ Enter key with dropdown open → selects highlighted item
 
 ---
 
@@ -592,18 +630,27 @@ Add chip styling:
 - Hover states for better interactivity
 - × symbol instead of icon (no dependencies)
 
+**Inline Dropdown**:
+- Appears directly below input field (native Obsidian styling)
+- Matches theme colors automatically
+- Smooth open/close animations
+- Clear visual hierarchy
+
 **Layout**:
 - Chips align with form fields (margin-left: 160px)
 - Wraps to multiple rows if many projects
 - Consistent spacing (gap: 6px)
+- Input remains visible above chips
 
 ### Accessibility
 
-- Keyboard navigation in suggest modal (↑↓ Enter Esc)
-- Click or Enter to add project
-- Click × or keyboard to remove chip
-- Clear visual feedback (hover states)
-- Screen reader friendly (semantic HTML)
+- Keyboard navigation in inline dropdown (↑↓ Enter Esc)
+- Tab to move between form fields
+- Type to filter → Enter to select → input clears automatically
+- Click × to remove chip (keyboard accessible)
+- Clear visual feedback (hover states, selected item highlighting)
+- Screen reader friendly (semantic HTML, ARIA attributes from AbstractInputSuggest)
+- No modal context switching (stays in main form)
 
 ### Performance
 
@@ -622,6 +669,13 @@ Add chip styling:
 - Frontmatter reads from MetadataCache (already in memory)
 - Filtering is O(n) where n = files in vault
 - Sorting is O(n log n) but n should be small (<100 typical)
+- Inline autocomplete has no additional modal overhead
+
+**Inline Autocomplete Benefits**:
+- No separate modal to open/close (saves ~100ms per interaction)
+- Suggestions appear instantly as user types
+- AbstractInputSuggest is highly optimized (used throughout Obsidian core)
+- Stays in context (no focus switching between modal and form)
 
 ---
 
@@ -635,21 +689,27 @@ Add chip styling:
    - Show recently used projects first
 
 2. **Project Metadata Display**:
-   - Show project status in suggest modal
+   - Show project status in inline dropdown
    - Display due dates or progress indicators
    - Add icons based on project type
+   - Rich rendering of suggestions (multi-line with metadata)
 
-3. **Quick Add**:
-   - Allow typing project name directly (no modal)
-   - Auto-suggest as user types (inline dropdown)
-   - Tab to accept suggestion
+3. **Enhanced Filtering** (v1 already has inline autocomplete):
+   - Fuzzy matching instead of substring match
+   - Score-based ranking (Obsidian's fuzzy match algorithm)
+   - Highlight matching characters in dropdown
 
-4. **Bulk Operations**:
-   - "Add All" button to include all suggestions
+4. **Keyboard Shortcuts**:
+   - Tab to accept first suggestion (currently requires Enter)
+   - Ctrl+Space to manually trigger dropdown
+   - Escape to clear input and close dropdown
+
+5. **Bulk Operations**:
+   - "Add All" button to include all filtered suggestions
    - "Clear All" button to remove all chips
    - Save/load project sets (e.g., "Client Alpha Bundle")
 
-5. **Advanced Filtering**:
+6. **Advanced Filtering**:
    - Multiple required tags (AND/OR logic)
    - Date-based filters (created/modified recently)
    - Property-based filters (priority, phase, etc.)
