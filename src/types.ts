@@ -56,6 +56,9 @@ export interface TaskCreationData {
 
   /** Free-text status description */
   statusDescription?: string;
+
+  /** Body content for the task note */
+  bodyContent?: string;
 }
 
 /**
@@ -207,6 +210,9 @@ export interface TaskCreationModalResult {
 
 	/** Additional tags beyond default */
 	additionalTags: string[];
+
+	/** Body content for the task note */
+	bodyContent?: string;
 }
 
 // Event constants

@@ -18,6 +18,7 @@ export class TaskCreationModal extends Modal {
 	private dueDateInput: HTMLInputElement;
 	private datePreview: HTMLElement;
 	private projectInput: HTMLInputElement;
+	private notesInput: HTMLTextAreaElement;
 	private errorElement: HTMLElement;
 
 	// Project chips UI
@@ -55,6 +56,9 @@ export class TaskCreationModal extends Modal {
 
 		// Project field
 		this.setupProjectField(contentEl);
+
+		// Other notes field
+		this.setupNotesField(contentEl);
 
 		// Error display
 		this.errorElement = contentEl.createDiv('error-message');
@@ -143,6 +147,36 @@ export class TaskCreationModal extends Modal {
 
 		// Create chip container below input
 		this.chipContainer = container.createDiv('project-chips');
+	}
+
+	/**
+	 * Set up other notes textarea field
+	 */
+	private setupNotesField(container: HTMLElement): void {
+		const setting = new Setting(container)
+			.setName('Other notes')
+			.setDesc('Additional context for the task note body');
+
+		// Create textarea element
+		setting.addTextArea((text) => {
+			this.notesInput = text.inputEl;
+			text.setPlaceholder('Enter any additional notes or context...');
+
+			// Configure textarea
+			this.notesInput.rows = 4;
+			this.notesInput.style.width = '100%';
+			this.notesInput.style.resize = 'vertical';
+
+			// Handle Ctrl+Enter or Cmd+Enter to submit (allow Enter for new lines)
+			text.inputEl.addEventListener('keydown', (evt) => {
+				if (evt.key === 'Enter' && (evt.ctrlKey || evt.metaKey)) {
+					evt.preventDefault();
+					this.handleSubmit();
+				}
+			});
+
+			return text;
+		});
 	}
 
 	/**
@@ -267,11 +301,15 @@ export class TaskCreationModal extends Modal {
 		const projectsInput = this.projectInput.value.trim();
 		const projects = this.extractProjects(projectsInput);
 
+		// Get body content
+		const bodyContent = this.notesInput.value.trim();
+
 		// Build result
 		this.result = {
 			dueDate,
 			projects,
 			additionalTags: [],
+			bodyContent: bodyContent || undefined,
 		};
 
 		// Resolve promise and close
