@@ -16,7 +16,7 @@ meta.json
 .copy-files.local
 
 # IDE
-.vscode/
+# .vscode/ is now tracked for shared settings
 .idea/
 
 # OS

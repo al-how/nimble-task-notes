@@ -188,6 +188,69 @@ This allows you to customize property names to match your existing vault structu
 
 ## Development
 
+### Prerequisites
+
+This project requires **Node.js 20.x (LTS)**. The version is specified in `.nvmrc` for consistency across environments.
+
+**Install Node.js 20.x**:
+- Using nvm (Windows/Mac/Linux): `nvm install` (reads from .nvmrc)
+- Using fnm (alternative): `fnm install` (reads from .nvmrc)
+- Manual download: [Node.js 20.x LTS](https://nodejs.org/)
+
+### Dual-Environment Development (Windows + Linux)
+
+This project is configured to work seamlessly in both Windows and Linux (Docker container) environments.
+
+**Cross-Platform Features**:
+- ✅ `.nvmrc` - Ensures consistent Node.js 20.x across environments
+- ✅ `.gitattributes` - Normalizes line endings to LF (prevents CRLF/LF conflicts)
+- ✅ `.editorconfig` - Standardizes editor behavior (tabs, line endings, charset)
+- ✅ `.vscode/` - Shared VSCode settings for consistent formatting and linting
+
+**Setting Up Each Environment**:
+
+1. **Clone the repository** (if you haven't already):
+   ```bash
+   git clone https://github.com/yourusername/lightweight-tasks.git
+   cd lightweight-tasks
+   ```
+
+2. **Install Node.js 20.x** (see Prerequisites above)
+
+3. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+4. **Configure test vault path** (environment-specific):
+
+   Create a `.copy-files.local` file in the project root with your vault path:
+
+   **Windows example**:
+   ```
+   C:\Users\YourName\Documents\Obsidian\TestVault\.obsidian\plugins\lightweight-tasks
+   ```
+
+   **Linux/Docker example**:
+   ```
+   /config/workspace/testvault/test/.obsidian/plugins/lightweight-tasks
+   ```
+
+   **Note**: `.copy-files.local` is gitignored, so each environment has its own configuration without conflicts.
+
+5. **Verify the setup**:
+   ```bash
+   npm run build        # Should build successfully
+   npm test             # Should pass all 104 tests
+   npm run dev          # Should copy to your configured vault
+   ```
+
+**Switching Between Environments**:
+- Git will handle line endings automatically (thanks to `.gitattributes`)
+- Code formatting is consistent across environments (thanks to `.editorconfig` and `.vscode/settings.json`)
+- Each environment uses its own `.copy-files.local` for vault paths
+- All npm scripts work identically on Windows and Linux
+
 ### Build Commands
 
 ```bash

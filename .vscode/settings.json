@@ -1,0 +1,44 @@
+{
+	// Editor
+	"editor.formatOnSave": true,
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"editor.codeActionsOnSave": {
+		"source.fixAll.eslint": "explicit"
+	},
+	"editor.tabSize": 4,
+	"editor.insertSpaces": false,
+	"editor.detectIndentation": false,
+
+	// Files
+	"files.eol": "\n",
+	"files.insertFinalNewline": true,
+	"files.trimTrailingWhitespace": true,
+	"files.exclude": {
+		"**/.git": true,
+		"**/node_modules": true,
+		"**/main.js": true,
+		"**/main.js.map": true
+	},
+
+	// TypeScript
+	"typescript.tsdk": "node_modules/typescript/lib",
+	"typescript.enablePromptUseWorkspaceTsdk": true,
+
+	// ESLint
+	"eslint.validate": [
+		"javascript",
+		"typescript"
+	],
+
+	// Prettier
+	"prettier.useTabs": true,
+	"prettier.tabWidth": 4,
+
+	// Search
+	"search.exclude": {
+		"**/node_modules": true,
+		"**/main.js": true,
+		"**/main.js.map": true,
+		"**/package-lock.json": true
+	}
+}

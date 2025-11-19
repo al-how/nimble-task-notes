@@ -36,6 +36,37 @@ npm run format
 npm run format:check
 ```
 
+## Development Environment
+
+### Dual-Environment Setup (Windows + Linux)
+
+This project supports development in both Windows and Linux (Docker container) environments with consistent behavior.
+
+**Prerequisites:**
+- **Node.js 20.x (LTS)** - Version locked via `.nvmrc`
+- Install with: `nvm install` (reads from .nvmrc automatically)
+
+**Cross-Platform Configuration:**
+- ✅ `.nvmrc` - Ensures Node.js 20.x across all environments
+- ✅ `.gitattributes` - Normalizes all source files to LF line endings
+- ✅ `.editorconfig` - Standardizes tabs, line endings, and charset
+- ✅ `.vscode/` - Shared VSCode settings for consistent linting/formatting
+
+**Test Vault Configuration:**
+
+Each environment uses a `.copy-files.local` file (gitignored) to specify the local vault path:
+
+- **Windows**: `C:\Users\Alex\Documents\Obsidian\TestVault\.obsidian\plugins\lightweight-tasks`
+- **Linux Docker**: `/config/workspace/testvault/test/.obsidian/plugins/lightweight-tasks`
+
+The `npm run dev` and `npm run build:deploy` commands automatically copy to the path specified in `.copy-files.local`.
+
+**Important Notes for Claude:**
+- When working in the Linux Docker container, the test vault path is `/config/workspace/testvault/test/`
+- The `.copy-files.local` file is already configured for the container environment
+- All npm scripts work identically across platforms
+- Line ending conflicts are prevented by `.gitattributes` (all files use LF)
+
 ## Project Status
 
 **Current Phase**: Phase 7 - Optimization & Testing (IN PROGRESS)
