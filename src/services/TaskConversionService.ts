@@ -174,6 +174,7 @@ export class TaskConversionService {
 			projects: modalResult.projects,
 			tags: allTags,
 			statusDescription: '',
+			bodyContent: modalResult.bodyContent,
 		};
 
 		// Create task using TaskService

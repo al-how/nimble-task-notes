@@ -63,7 +63,8 @@ export class TaskService {
       await this.ensureFolderExists(folder);
 
       const frontmatter = this.buildFrontmatter(data);
-      const content = this.buildFileContent(frontmatter, sanitizedTitle);
+      const body = data.bodyContent || sanitizedTitle;
+      const content = this.buildFileContent(frontmatter, body);
 
       const file = await this.app.vault.create(path, content);
 
