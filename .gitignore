@@ -18,6 +18,8 @@ meta.json
 # IDE
 # .vscode/ is now tracked for shared settings
 .idea/
+.claude/
+docs/
 
 # OS
 .DS_Store
@@ -26,3 +28,5 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+docs/
