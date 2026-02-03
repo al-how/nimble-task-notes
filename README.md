@@ -2,7 +2,7 @@
 
 A fast, focused task note management plugin for Obsidian that integrates with your Outlook calendar and makes task creation effortless with natural language date parsing.
 
-> **Note**: This is a personal project that I "vibe coded" to scratch my own itch. It's actively maintained and I use it daily, but it's experimental and has no formal release schedule. Feedback and contributions are very welcome! 🙂
+> **Note**: This is a personal project that I vibe coded to scratch my own itch. It's actively maintained and I use it daily, but it's experimental and has no formal release schedule. Feedback and contributions are very welcome! 🙂
 
 ## Why I Made This
 
