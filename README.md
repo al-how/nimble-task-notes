@@ -1,6 +1,20 @@
-# Lightweight Tasks
+# Nimble Task Notes
 
-A focused task management plugin for Obsidian that integrates with your Outlook calendar and makes task creation effortless with natural language date parsing.
+A fast, focused task note management plugin for Obsidian that integrates with your Outlook calendar and makes task creation effortless with natural language date parsing.
+
+> **Note**: This is a personal project that I "vibe coded" to scratch my own itch. It's actively maintained and I use it daily, but it's experimental and has no formal release schedule. Feedback and contributions are very welcome! 🙂
+
+## Why I Made This
+
+I wanted note-based task management that would work seamlessly with the [Bases plugin](https://github.com/SkepticMystic/obsidian-base-plugin) for custom views. I tried a few other task plugins but found them either too complex or missing key features I needed. Many have 20,000+ lines of code with time tracking, Pomodoro timers, recurring tasks, dependency tracking, webhooks, and built-in custom views.
+
+I just needed the essentials:
+- Convert checkboxes to task files with natural language dates
+- Import calendar meetings into daily notes
+- Associate tasks with projects
+- Keep it simple, fast, and ready for LLM integration via MCP
+
+So I built this: a lightweight alternative focused on doing a few things really well. ~2,500 lines of code, loads in under 100ms, and plays nicely with the ecosystem of Obsidian plugins instead of reinventing the wheel.
 
 ## Features
 
@@ -39,24 +53,29 @@ statusDescription: "Waiting for approval"
 
 ## Current Status
 
-**Phases 1-4 & 7 (Optimization/Testing)**: ✅ **Complete**
+**Core Features Complete** ✅
 
-- ✅ Phase 1: Project Setup
-- ✅ Phase 2: Core Infrastructure (TaskManager, TaskService, FieldMapper)
-- ✅ Phase 3: Calendar Integration (ICS import, meeting wikilinks)
-- ✅ Phase 4: Inline Task Conversion (checkbox-to-task with NLP dates)
-- ✅ Phase 7: Optimization & Testing (lazy loading, 104 unit tests, documentation)
-- ⏳ Phase 5: Bases Integration (planned)
-- ⏳ Phase 6: MCP Server (planned)
+- ✅ Project Setup
+- ✅ Core Infrastructure (TaskManager, TaskService, FieldMapper)
+- ✅ Calendar Integration (ICS import, meeting wikilinks)
+- ✅ Inline Task Conversion (checkbox-to-task with NLP dates)
+- ✅ Optimization & Testing (lazy loading, 104 unit tests, documentation)
+
+All the essential features are working and stable. I use this daily in my own vault.
 
 ## Installation
 
-### Manual Installation (From Release)
+### Installation via BRAT (Recommended)
 
-1. Download the latest release from the [Releases](https://github.com/yourusername/lightweight-tasks/releases) page
-2. Extract the files to your Obsidian vault's `.obsidian/plugins/lightweight-tasks/` folder
-3. Reload Obsidian
-4. Enable "Lightweight Tasks" in Settings → Community Plugins
+Since there are no official releases yet, the easiest way to install is via [BRAT (Beta Reviewers Auto-update Tool)](https://github.com/TfTHacker/obsidian42-brat):
+
+1. Install the BRAT plugin from Obsidian's Community Plugins
+2. Open Settings → BRAT → "Add Beta plugin"
+3. Enter: `al-how/nimble-task-notes`
+4. Click "Add Plugin"
+5. Enable "Nimble Task Notes" in Settings → Community Plugins
+
+BRAT will automatically keep the plugin updated from the main branch.
 
 ### Manual Installation (Build From Source)
 
@@ -64,8 +83,8 @@ If you want to install the latest development version in your live vault:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/lightweight-tasks.git
-cd lightweight-tasks
+git clone https://github.com/al-how/nimble-task-notes.git
+cd nimble-task-notes
 
 # Install dependencies
 npm install
@@ -74,17 +93,17 @@ npm install
 npm run build:deploy
 ```
 
-**Important**: By default, this copies to `~/testvault/test/.obsidian/plugins/lightweight-tasks`.
+**Important**: By default, this copies to `~/testvault/test/.obsidian/plugins/nimble-task-notes`.
 
 To deploy to your **live vault**, create a `.copy-files.local` file in the project root with your vault path:
 
 ```
-C:\path\to\your\vault\.obsidian\plugins\lightweight-tasks
+C:\path\to\your\vault\.obsidian\plugins\nimble-task-notes
 ```
 
 Or on Mac/Linux:
 ```
-/Users/yourname/Documents/MyVault/.obsidian/plugins/lightweight-tasks
+/Users/yourname/Documents/MyVault/.obsidian/plugins/nimble-task-notes
 ```
 
 Then run:
@@ -98,7 +117,7 @@ This will:
 3. Copy `main.js` and `manifest.json` to your vault
 4. Your vault will have only 2-3 files (~388KB total)
 
-After deployment, reload Obsidian and enable "Lightweight Tasks" in Settings → Community Plugins.
+After deployment, reload Obsidian and enable "Nimble Task Notes" in Settings → Community Plugins.
 
 ### Development Installation (Test Vault)
 
@@ -156,7 +175,7 @@ The plugin understands many natural language date expressions:
 
 ### Settings
 
-Access plugin settings via Settings → Lightweight Tasks:
+Access plugin settings via Settings → Nimble Task Notes:
 
 #### Calendar Settings
 - **ICS Subscription URL**: Your Outlook calendar ICS feed URL
@@ -209,36 +228,30 @@ This project is configured to work seamlessly in both Windows and Linux (Docker 
 
 **Setting Up Each Environment**:
 
-1. **Clone the repository** (if you haven't already):
-   ```bash
-   git clone https://github.com/yourusername/lightweight-tasks.git
-   cd lightweight-tasks
-   ```
+1. **Install Node.js 20.x** (see Prerequisites above)
 
-2. **Install Node.js 20.x** (see Prerequisites above)
-
-3. **Install dependencies**:
+2. **Install dependencies**:
    ```bash
    npm install
    ```
 
-4. **Configure test vault path** (environment-specific):
+3. **Configure test vault path** (environment-specific):
 
    Create a `.copy-files.local` file in the project root with your vault path:
 
    **Windows example**:
    ```
-   C:\Users\YourName\Documents\Obsidian\TestVault\.obsidian\plugins\lightweight-tasks
+   C:\Users\YourName\Documents\Obsidian\TestVault\.obsidian\plugins\nimble-task-notes
    ```
 
    **Linux/Docker example**:
    ```
-   /config/workspace/testvault/test/.obsidian/plugins/lightweight-tasks
+   /config/workspace/testvault/test/.obsidian/plugins/nimble-task-notes
    ```
 
    **Note**: `.copy-files.local` is gitignored, so each environment has its own configuration without conflicts.
 
-5. **Verify the setup**:
+4. **Verify the setup**:
    ```bash
    npm run build        # Should build successfully
    npm test             # Should pass all 104 tests
@@ -250,6 +263,12 @@ This project is configured to work seamlessly in both Windows and Linux (Docker 
 - Code formatting is consistent across environments (thanks to `.editorconfig` and `.vscode/settings.json`)
 - Each environment uses its own `.copy-files.local` for vault paths
 - All npm scripts work identically on Windows and Linux
+
+**Clone the repository**:
+```bash
+git clone https://github.com/al-how/nimble-task-notes.git
+cd nimble-task-notes
+```
 
 ### Build Commands
 
@@ -306,7 +325,7 @@ By default, the plugin copies to `~/testvault/test/.obsidian/plugins/lightweight
 To use a different vault, create a `.copy-files.local` file with your vault path:
 
 ```
-/path/to/your/vault/.obsidian/plugins/lightweight-tasks
+/path/to/your/vault/.obsidian/plugins/nimble-task-notes
 ```
 
 ## Architecture
@@ -331,18 +350,21 @@ The plugin uses several optimization techniques:
 3. **JIT Data Access**: No internal caching, reads fresh from metadata cache
 4. **Deferred Initialization**: Calendar fetching happens in background, doesn't block startup
 
-### Comparison with TaskNotes
+### What Makes This Different
 
-This plugin is inspired by TaskNotes but significantly simplified:
+This plugin takes a minimalist approach compared to full-featured task management plugins:
 
-| Feature | TaskNotes | Lightweight Tasks |
+| Feature | Full-Featured Plugins | Nimble Task Notes |
 |---------|-----------|------------------|
-| Lines of code | ~20,000 | ~2,500 |
+| Lines of code | ~20,000+ | ~2,500 |
 | Load time | 2-5 seconds | <100ms |
-| Bundle size | ~600KB | 384KB |
+| Bundle size | ~600KB+ | 384KB |
 | Task tracking | ✅ | ✅ |
 | Calendar import | ✅ | ✅ |
-| Custom views | ✅ | ❌ (Use Bases plugin) |
+| Natural language dates | ❌ | ✅ |
+| Auto-completion dates | ❌ | ✅ |
+| Configurable properties | ❌ | ✅ |
+| Custom views | ✅ Built-in | Use Bases plugin |
 | Time tracking | ✅ | ❌ |
 | Pomodoro | ✅ | ❌ |
 | Recurring tasks | ✅ | ❌ |
@@ -373,7 +395,7 @@ If natural language parsing fails, the plugin falls back to strict YYYY-MM-DD fo
 
 ## Contributing
 
-Contributions are welcome! Please:
+Contributions are very welcome! This is a personal project but I'm happy to collaborate. Please:
 
 1. Fork the repository
 2. Create a feature branch
@@ -381,18 +403,20 @@ Contributions are welcome! Please:
 4. Ensure all tests pass (`npm test`)
 5. Submit a pull request
 
+Feel free to open an issue first if you want to discuss a feature or major change.
+
 ## License
 
 MIT License - see LICENSE file for details
 
 ## Credits
 
-- Inspired by [TaskNotes](https://github.com/jasonmotylinski/tasknotes)
 - Uses [chrono-node](https://github.com/wanasit/chrono) for natural language date parsing
 - Uses [ical.js](https://github.com/kewisch/ical.js) for calendar parsing
+- Inspired by the Obsidian task management plugin ecosystem
 
 ## Support
 
-- 🐛 [Report bugs](https://github.com/yourusername/lightweight-tasks/issues)
-- 💡 [Request features](https://github.com/yourusername/lightweight-tasks/issues)
-- 📖 [Read documentation](https://github.com/yourusername/lightweight-tasks/wiki)
+- 🐛 [Report bugs](https://github.com/al-how/nimble-task-notes/issues)
+- 💡 [Request features](https://github.com/al-how/nimble-task-notes/issues)
+- 📖 [Documentation](https://github.com/al-how/nimble-task-notes)

@@ -1,7 +1,7 @@
 {
-	"name": "lightweight-tasks",
+	"name": "nimble-task-notes",
 	"version": "0.1.0",
-	"description": "A focused task management plugin for Obsidian",
+	"description": "Fast, focused task note management plugin for Obsidian",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs && node copy-files.mjs",

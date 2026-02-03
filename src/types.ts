@@ -216,6 +216,6 @@ export interface TaskCreationModalResult {
 }
 
 // Event constants
-export const EVENT_TASK_UPDATED = "lightweight-tasks:task-updated";
-export const EVENT_TASK_CREATED = "lightweight-tasks:task-created";
-export const EVENT_TASK_DELETED = "lightweight-tasks:task-deleted";
+export const EVENT_TASK_UPDATED = "nimble-task-notes:task-updated";
+export const EVENT_TASK_CREATED = "nimble-task-notes:task-created";
+export const EVENT_TASK_DELETED = "nimble-task-notes:task-deleted";

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 ## Project Overview
 
-Lightweight Task Manager is a focused Obsidian plugin for task management. It's an 80% smaller alternative to TaskNotes (~4,500 vs ~20,000 lines), focusing on:
+Nimble Task Notes is a fast, focused Obsidian plugin for task note management. It's an 80% smaller alternative to full-featured task plugins (~4,500 vs ~20,000 lines), focusing on:
 - Calendar integration for meeting note creation from Outlook
 - Inline task conversion with natural language date parsing
 - Bases plugin integration (no custom views)
@@ -56,8 +56,8 @@ This project supports development in both Windows and Linux (Docker container) e
 
 Each environment uses a `.copy-files.local` file (gitignored) to specify the local vault path:
 
-- **Windows**: `C:\Users\Alex\Documents\Obsidian\TestVault\.obsidian\plugins\lightweight-tasks`
-- **Linux Docker**: `/config/workspace/testvault/test/.obsidian/plugins/lightweight-tasks`
+- **Windows**: `C:\Users\Alex\Documents\Obsidian\TestVault\.obsidian\plugins\nimble-task-notes`
+- **Linux Docker**: `/config/workspace/testvault/test/.obsidian/plugins/nimble-task-notes`
 
 The `npm run dev` and `npm run build:deploy` commands automatically copy to the path specified in `.copy-files.local`.
 

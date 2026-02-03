@@ -5,7 +5,7 @@ import { join, resolve } from 'path';
 import os from 'os';
 
 // Default copy destination
-const defaultPath = join(os.homedir(), 'testvault', 'test', '.obsidian', 'plugins', 'lightweight-tasks');
+const defaultPath = join(os.homedir(), 'testvault', 'test', '.obsidian', 'plugins', 'nimble-task-notes');
 const LOCAL_OVERRIDE_FILE = '.copy-files.local';
 let copyPath = process.env.OBSIDIAN_PLUGIN_PATH || defaultPath;
 

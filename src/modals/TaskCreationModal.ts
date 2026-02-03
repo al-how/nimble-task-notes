@@ -40,7 +40,7 @@ export class TaskCreationModal extends Modal {
 	onOpen(): void {
 		const { contentEl } = this;
 		contentEl.empty();
-		contentEl.addClass('lightweight-tasks-modal');
+		contentEl.addClass('nimble-task-notes-modal');
 
 		// Modal title
 		contentEl.createEl('h2', { text: 'Create Task' });
