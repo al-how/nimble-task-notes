@@ -2,16 +2,16 @@ import { App, TFile } from "obsidian";
 import type { LightweightTasksSettings } from "../types";
 
 /**
- * Service for discovering eligible project files based on configured filters
+ * Service for discovering eligible people files based on configured filters
  *
- * Filters projects by:
+ * Filters people by:
  * - Source folder path (optional)
  * - Required tag in frontmatter
  * - Excluded status values
  *
- * Returns sorted list of project names (most recently modified first)
+ * Returns sorted list of people names (most recently modified first)
  */
-export class ProjectDiscoveryService {
+export class PeopleDiscoveryService {
 	private app: App;
 	private settings: LightweightTasksSettings;
 
@@ -21,32 +21,32 @@ export class ProjectDiscoveryService {
 	}
 
 	/**
-	 * Get list of available projects based on settings
-	 * @returns Array of project names (sorted by modification time, most recent first)
+	 * Get list of available people based on settings
+	 * @returns Array of people names (sorted by modification time, most recent first)
 	 */
-	getAvailableProjects(): string[] {
+	getAvailablePeople(): string[] {
 		const allFiles = this.app.vault.getMarkdownFiles();
-		const eligibleProjects: TFile[] = [];
+		const eligiblePeople: TFile[] = [];
 
 		for (const file of allFiles) {
-			if (this.isEligibleProject(file)) {
-				eligibleProjects.push(file);
+			if (this.isEligiblePerson(file)) {
+				eligiblePeople.push(file);
 			}
 		}
 
 		// Sort by modification time (most recent first)
-		eligibleProjects.sort((a, b) => b.stat.mtime - a.stat.mtime);
+		eligiblePeople.sort((a, b) => b.stat.mtime - a.stat.mtime);
 
 		// Return basenames without .md extension
-		return eligibleProjects.map((file) => file.basename);
+		return eligiblePeople.map((file) => file.basename);
 	}
 
 	/**
-	 * Check if file matches project criteria
+	 * Check if file matches people criteria
 	 * @param file - File to check
-	 * @returns true if file is a valid project suggestion
+	 * @returns true if file is a valid person suggestion
 	 */
-	private isEligibleProject(file: TFile): boolean {
+	private isEligiblePerson(file: TFile): boolean {
 		// Check folder restriction
 		if (!this.isInSourceFolder(file)) {
 			return false;
@@ -71,7 +71,7 @@ export class ProjectDiscoveryService {
 	 * @returns true if in source folder (or no folder restriction)
 	 */
 	private isInSourceFolder(file: TFile): boolean {
-		const sourceFolder = this.settings.projectsSourceFolder?.trim();
+		const sourceFolder = this.settings.peopleSourceFolder?.trim();
 
 		// No folder restriction
 		if (!sourceFolder) {
@@ -86,7 +86,7 @@ export class ProjectDiscoveryService {
 			.toLowerCase();
 
 		// Check if file path starts with folder path + /
-		// This ensures "Projects" matches "Projects/file.md" but not "Projects2/file.md"
+		// This ensures "People" matches "People/file.md" but not "People2/file.md"
 		return filePath.startsWith(folderPath + "/");
 	}
 
@@ -96,7 +96,7 @@ export class ProjectDiscoveryService {
 	 * @returns true if has required tag
 	 */
 	private hasRequiredTag(file: TFile): boolean {
-		const requiredTag = this.settings.projectsRequiredTag?.trim();
+		const requiredTag = this.settings.peopleRequiredTag?.trim();
 
 		// No tag requirement
 		if (!requiredTag) {
@@ -129,7 +129,7 @@ export class ProjectDiscoveryService {
 	 * @returns true if status is allowed
 	 */
 	private hasAllowedStatus(file: TFile): boolean {
-		const excludedStatuses = this.settings.projectsExcludedStatuses || [];
+		const excludedStatuses = this.settings.peopleExcludedStatuses || [];
 
 		// No status exclusions
 		if (excludedStatuses.length === 0) {
@@ -143,7 +143,7 @@ export class ProjectDiscoveryService {
 			return true;
 		}
 
-		const statusProperty = this.settings.projectsStatusProperty || "status";
+		const statusProperty = this.settings.peopleStatusProperty || "status";
 		const fileStatus = cache.frontmatter[statusProperty];
 
 		// No status property = not excluded

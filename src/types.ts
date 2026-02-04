@@ -4,181 +4,198 @@ import { TFile } from "obsidian";
  * Core task information structure
  */
 export interface TaskInfo {
-  /** File path of the task note */
-  path: string;
+	/** File path of the task note */
+	path: string;
 
-  /** Task title (from filename or frontmatter) */
-  title: string;
+	/** Task title (from filename or frontmatter) */
+	title: string;
 
-  /** Completion status */
-  complete: boolean;
+	/** Completion status */
+	complete: boolean;
 
-  /** Due date in YYYY-MM-DD format */
-  due: string | null;
+	/** Due date in YYYY-MM-DD format */
+	due: string | null;
 
-  /** Completion date in YYYY-MM-DD format */
-  completed: string | null;
+	/** Completion date in YYYY-MM-DD format */
+	completed: string | null;
 
-  /** Associated projects as wikilinks */
-  projects: string[];
+	/** Associated projects as wikilinks */
+	projects: string[];
 
-  /** Tags for categorization (always includes 'task') */
-  tags: string[];
+	/** Associated people as wikilinks */
+	people: string[];
 
-  /** Free-text status description */
-  statusDescription: string;
+	/** Tags for categorization (always includes 'task') */
+	tags: string[];
 
-  /** Reference to the Obsidian TFile object */
-  file?: TFile;
+	/** Free-text status description */
+	statusDescription: string;
+
+	/** Reference to the Obsidian TFile object */
+	file?: TFile;
 }
 
 /**
  * Data structure for creating a new task
  */
 export interface TaskCreationData {
-  /** Task title */
-  title: string;
+	/** Task title */
+	title: string;
 
-  /** Completion status (default: false) */
-  complete?: boolean;
+	/** Completion status (default: false) */
+	complete?: boolean;
 
-  /** Due date in YYYY-MM-DD format */
-  due?: string | null;
+	/** Due date in YYYY-MM-DD format */
+	due?: string | null;
 
-  /** Completion date in YYYY-MM-DD format */
-  completed?: string | null;
+	/** Completion date in YYYY-MM-DD format */
+	completed?: string | null;
 
-  /** Associated projects as wikilinks */
-  projects?: string[];
+	/** Associated projects as wikilinks */
+	projects?: string[];
 
-  /** Tags (always includes 'task') */
-  tags?: string[];
+	/** Associated people as wikilinks */
+	people?: string[];
 
-  /** Free-text status description */
-  statusDescription?: string;
+	/** Tags (always includes 'task') */
+	tags?: string[];
 
-  /** Body content for the task note */
-  bodyContent?: string;
+	/** Free-text status description */
+	statusDescription?: string;
+
+	/** Body content for the task note */
+	bodyContent?: string;
 }
 
 /**
  * Property name configuration for task frontmatter
  */
 export interface PropertyNames {
-  /** Name of the status/completion property (default: "taskStatus") */
-  status: string;
-  /** Name of the due date property (default: "due") */
-  due: string;
-  /** Name of the completed date property (default: "completed") */
-  completed: string;
-  /** Name of the projects property (default: "projects") */
-  projects: string;
-  /** Name of the tags property (default: "tags") */
-  tags: string;
-  /** Name of the status description property (default: "statusDescription") */
-  statusDescription: string;
+	/** Name of the status/completion property (default: "taskStatus") */
+	status: string;
+	/** Name of the due date property (default: "due") */
+	due: string;
+	/** Name of the completed date property (default: "completed") */
+	completed: string;
+	/** Name of the projects property (default: "projects") */
+	projects: string;
+	/** Name of the people property (default: "people") */
+	people: string;
+	/** Name of the tags property (default: "tags") */
+	tags: string;
+	/** Name of the status description property (default: "statusDescription") */
+	statusDescription: string;
 }
 
 /**
  * Plugin settings interface
  */
 export interface LightweightTasksSettings {
-  /** Folder path for task notes */
-  taskFolder: string;
+	/** Folder path for task notes */
+	taskFolder: string;
 
-  /** Folder path for meeting notes */
-  meetingFolder: string;
+	/** Folder path for meeting notes */
+	meetingFolder: string;
 
-  /** Outlook calendar ICS feed URL */
-  calendarURL: string;
+	/** Outlook calendar ICS feed URL */
+	calendarURL: string;
 
-  /** Default tags to add to new tasks */
-  defaultTags: string[];
+	/** Default tags to add to new tasks */
+	defaultTags: string[];
 
-  /** Enable natural language date parsing */
-  enableNaturalLanguageDates: boolean;
+	/** Enable natural language date parsing */
+	enableNaturalLanguageDates: boolean;
 
-  /** Show convert button at end of checkbox lines */
-  showConvertButton: boolean;
+	/** Show convert button at end of checkbox lines */
+	showConvertButton: boolean;
 
-  /** Enable HTTP API for MCP integration */
-  enableHTTPAPI: boolean;
+	/** Enable HTTP API for MCP integration */
+	enableHTTPAPI: boolean;
 
-  /** HTTP API port */
-  apiPort: number;
+	/** HTTP API port */
+	apiPort: number;
 
-  /** API key for authentication */
-  apiKey: string;
+	/** API key for authentication */
+	apiKey: string;
 
-  /** Configurable property names for task frontmatter */
-  propertyNames: PropertyNames;
+	/** Configurable property names for task frontmatter */
+	propertyNames: PropertyNames;
 
-  /** Enable project suggestions in task creation modal */
-  enableProjectSuggestions: boolean;
+	/** Folder containing project files (empty = vault root) */
+	projectsSourceFolder: string;
 
-  /** Folder containing project files (empty = vault root) */
-  projectsSourceFolder: string;
+	/** Tag that identifies project files (without #) */
+	projectsRequiredTag: string;
 
-  /** Tag that identifies project files (without #) */
-  projectsRequiredTag: string;
+	/** Frontmatter property containing status value */
+	projectsStatusProperty: string;
 
-  /** Frontmatter property containing status value */
-  projectsStatusProperty: string;
+	/** Status values to exclude from suggestions */
+	projectsExcludedStatuses: string[];
 
-  /** Status values to exclude from suggestions */
-  projectsExcludedStatuses: string[];
+	/** Folder containing people files (empty = vault root) */
+	peopleSourceFolder: string;
+
+	/** Tag that identifies people files (without #) */
+	peopleRequiredTag: string;
+
+	/** Frontmatter property containing status value for people */
+	peopleStatusProperty: string;
+
+	/** Status values to exclude from people suggestions */
+	peopleExcludedStatuses: string[];
 }
 
 /**
  * Event data for task updates
  */
 export interface TaskUpdatedEvent {
-  file: TFile;
-  task: TaskInfo;
-  changes?: Partial<TaskInfo>;
+	file: TFile;
+	task: TaskInfo;
+	changes?: Partial<TaskInfo>;
 }
 
 /**
  * Calendar event from ICS feed (parsed)
  */
 export interface ICSEvent {
-  /** Unique event ID */
-  id: string;
+	/** Unique event ID */
+	id: string;
 
-  /** Event title/summary */
-  title: string;
+	/** Event title/summary */
+	title: string;
 
-  /** Start time as ISO string or YYYY-MM-DD for all-day */
-  start: string;
+	/** Start time as ISO string or YYYY-MM-DD for all-day */
+	start: string;
 
-  /** End time as ISO string or YYYY-MM-DD for all-day */
-  end?: string;
+	/** End time as ISO string or YYYY-MM-DD for all-day */
+	end?: string;
 
-  /** Is all-day event */
-  allDay: boolean;
+	/** Is all-day event */
+	allDay: boolean;
 
-  /** Event description */
-  description?: string;
+	/** Event description */
+	description?: string;
 
-  /** Event location */
-  location?: string;
+	/** Event location */
+	location?: string;
 }
 
 /**
  * ICS subscription cache
  */
 export interface ICSCache {
-  /** Subscription ID */
-  subscriptionId: string;
+	/** Subscription ID */
+	subscriptionId: string;
 
-  /** Cached events */
-  events: ICSEvent[];
+	/** Cached events */
+	events: ICSEvent[];
 
-  /** When cache was last updated */
-  lastUpdated: string;
+	/** When cache was last updated */
+	lastUpdated: string;
 
-  /** When cache expires */
-  expires: string;
+	/** When cache expires */
+	expires: string;
 }
 
 /**
@@ -207,6 +224,9 @@ export interface TaskCreationModalResult {
 
 	/** Array of project wikilinks */
 	projects: string[];
+
+	/** Array of people wikilinks */
+	people: string[];
 
 	/** Additional tags beyond default */
 	additionalTags: string[];
