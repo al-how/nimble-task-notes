@@ -2,6 +2,8 @@
 
 A fast, focused task note management plugin for Obsidian that integrates with your Outlook calendar and makes task creation effortless with natural language date parsing.
 
+<video src="https://github.com/al-how/nimble-task-notes/raw/main/assets/demo.mp4" width="100%" autoplay loop muted playsinline></video>
+
 > **Note**: This is a personal project that I vibe coded to scratch my own itch. It's actively maintained and I use it daily, but it's experimental and has no formal release schedule. Feedback and contributions are very welcome! 🙂
 
 ## Why I Made This
