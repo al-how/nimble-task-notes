@@ -52,7 +52,7 @@ export class ServiceContainer {
 		const factory = this.factories.get(key);
 		if (!factory) {
 			throw new Error(
-				`ServiceContainer: Service '${key}' not registered. Available: ${Array.from(this.factories.keys()).join(', ')}`,
+				`ServiceContainer: Service '${key}' not registered. Available: ${Array.from(this.factories.keys()).join(", ")}`,
 			);
 		}
 
@@ -91,7 +91,7 @@ export class ServiceContainer {
 	clear(): void {
 		// Call destroy() on services that have it
 		for (const [key, service] of this.services) {
-			if (service && typeof service.destroy === 'function') {
+			if (service && typeof service.destroy === "function") {
 				console.log(`ServiceContainer: Destroying '${key}'`);
 				service.destroy();
 			}

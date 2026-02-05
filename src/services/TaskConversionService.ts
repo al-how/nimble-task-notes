@@ -1,13 +1,13 @@
-import { Editor, Notice, TFile } from 'obsidian';
-import type LightweightTasksPlugin from '../main';
+import { Editor, Notice, TFile } from "obsidian";
+import type LightweightTasksPlugin from "../main";
 import type {
 	CheckboxData,
 	TaskCreationData,
 	TaskCreationModalResult,
-} from '../types';
-import { TaskCreationModal } from '../modals/TaskCreationModal';
-import type { TaskService } from './TaskService';
-import type { NaturalLanguageParser } from './NaturalLanguageParser';
+} from "../types";
+import { TaskCreationModal } from "../modals/TaskCreationModal";
+import type { TaskService } from "./TaskService";
+import type { NaturalLanguageParser } from "./NaturalLanguageParser";
 
 /**
  * Service for converting checkboxes to task notes.
@@ -19,8 +19,8 @@ export class TaskConversionService {
 
 	constructor(private plugin: LightweightTasksPlugin) {
 		// Lazy-load services from container
-		this.taskService = plugin.getService('taskService');
-		this.nlpParser = plugin.getService('nlpParser');
+		this.taskService = plugin.getService("taskService");
+		this.nlpParser = plugin.getService("nlpParser");
 	}
 
 	/**
@@ -32,7 +32,7 @@ export class TaskConversionService {
 	 */
 	async convertCheckboxToTask(
 		editor: Editor,
-		lineNumber?: number
+		lineNumber?: number,
 	): Promise<void> {
 		// Get current line if not specified
 		if (lineNumber === undefined) {
@@ -45,13 +45,13 @@ export class TaskConversionService {
 		const checkboxData = this.extractCheckboxData(line);
 
 		if (!checkboxData) {
-			new Notice('No checkbox found on this line');
+			new Notice("No checkbox found on this line");
 			return;
 		}
 
 		// Check if line already has a wikilink (already converted)
 		if (this.hasWikilink(checkboxData.title)) {
-			new Notice('This checkbox is already linked to a task');
+			new Notice("This checkbox is already linked to a task");
 			return;
 		}
 
@@ -67,7 +67,7 @@ export class TaskConversionService {
 			// Create task file
 			const taskFile = await this.createTaskFromModal(
 				checkboxData,
-				modalResult
+				modalResult,
 			);
 
 			// Replace editor line with wikilink
@@ -75,12 +75,12 @@ export class TaskConversionService {
 				editor,
 				lineNumber,
 				checkboxData,
-				taskFile.basename
+				taskFile.basename,
 			);
 
 			new Notice(`Task created: ${taskFile.basename}`);
 		} catch (error) {
-			console.error('Task conversion error:', error);
+			console.error("Task conversion error:", error);
 			new Notice(`Failed to create task: ${error.message}`);
 		}
 	}
@@ -107,7 +107,7 @@ export class TaskConversionService {
 			indent,
 			status,
 			title: title.trim(),
-			complete: status.toLowerCase() === 'x',
+			complete: status.toLowerCase() === "x",
 		};
 	}
 
@@ -125,7 +125,7 @@ export class TaskConversionService {
 	 * @returns Modal result or null if cancelled
 	 */
 	private async showTaskCreationModal(
-		data: CheckboxData
+		data: CheckboxData,
 	): Promise<TaskCreationModalResult | null> {
 		const modal = new TaskCreationModal(this.plugin.app, this.plugin, data);
 		modal.open();
@@ -141,19 +141,19 @@ export class TaskConversionService {
 	 */
 	private async createTaskFromModal(
 		checkboxData: CheckboxData,
-		modalResult: TaskCreationModalResult
+		modalResult: TaskCreationModalResult,
 	): Promise<TFile> {
 		// Handle empty title
 		let title = checkboxData.title.trim();
 		if (!title) {
-			title = 'Untitled Task';
+			title = "Untitled Task";
 		}
 
 		// Format due date to YYYY-MM-DD
 		let dueDate: string | null = null;
 		if (modalResult.dueDate) {
 			dueDate = this.nlpParser.formatDateForFrontmatter(
-				modalResult.dueDate
+				modalResult.dueDate,
 			);
 		}
 
@@ -162,8 +162,8 @@ export class TaskConversionService {
 		const allTags = [...defaultTags, ...modalResult.additionalTags];
 
 		// Ensure 'task' tag is included
-		if (!allTags.includes('task')) {
-			allTags.unshift('task');
+		if (!allTags.includes("task")) {
+			allTags.unshift("task");
 		}
 
 		// Build task creation data
@@ -172,8 +172,9 @@ export class TaskConversionService {
 			complete: checkboxData.complete,
 			due: dueDate,
 			projects: modalResult.projects,
+			people: modalResult.people,
 			tags: allTags,
-			statusDescription: '',
+			statusDescription: "",
 			bodyContent: modalResult.bodyContent,
 		};
 
@@ -194,7 +195,7 @@ export class TaskConversionService {
 		editor: Editor,
 		lineNumber: number,
 		checkboxData: CheckboxData,
-		taskTitle: string
+		taskTitle: string,
 	): void {
 		// Build new line: indent + checkbox + wikilink
 		const newLine = `${checkboxData.indent}- [${checkboxData.status}] [[${taskTitle}]]`;
@@ -204,7 +205,10 @@ export class TaskConversionService {
 			changes: [
 				{
 					from: { line: lineNumber, ch: 0 },
-					to: { line: lineNumber, ch: editor.getLine(lineNumber).length },
+					to: {
+						line: lineNumber,
+						ch: editor.getLine(lineNumber).length,
+					},
 					text: newLine,
 				},
 			],
@@ -218,7 +222,7 @@ export class TaskConversionService {
 	async convertCurrentCheckbox(): Promise<void> {
 		const activeLeaf = this.plugin.app.workspace.activeLeaf;
 		if (!activeLeaf) {
-			new Notice('No active editor');
+			new Notice("No active editor");
 			return;
 		}
 
@@ -227,7 +231,7 @@ export class TaskConversionService {
 		const editor = view.editor;
 
 		if (!editor) {
-			new Notice('No markdown editor available');
+			new Notice("No markdown editor available");
 			return;
 		}
 

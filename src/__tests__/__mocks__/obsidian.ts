@@ -26,7 +26,7 @@ export class Events {
 	trigger(event: string, ...args: any[]): void {
 		const handlers = this.handlers.get(event);
 		if (handlers) {
-			handlers.forEach(handler => handler(...args));
+			handlers.forEach((handler) => handler(...args));
 		}
 	}
 }
@@ -39,11 +39,12 @@ export class TFile {
 
 	constructor(path: string) {
 		this.path = path;
-		const parts = path.split('/');
+		const parts = path.split("/");
 		const filename = parts[parts.length - 1];
-		const dotIndex = filename.lastIndexOf('.');
-		this.basename = dotIndex > 0 ? filename.substring(0, dotIndex) : filename;
-		this.extension = dotIndex > 0 ? filename.substring(dotIndex + 1) : '';
+		const dotIndex = filename.lastIndexOf(".");
+		this.basename =
+			dotIndex > 0 ? filename.substring(0, dotIndex) : filename;
+		this.extension = dotIndex > 0 ? filename.substring(dotIndex + 1) : "";
 		this.stat = {
 			mtime: Date.now(),
 			ctime: Date.now(),
@@ -58,7 +59,7 @@ export class TFolder {
 
 	constructor(path: string) {
 		this.path = path;
-		const parts = path.split('/');
+		const parts = path.split("/");
 		this.name = parts[parts.length - 1];
 	}
 }
@@ -76,7 +77,7 @@ export class Modal {
 
 	constructor(app: any) {
 		this.app = app;
-		this.contentEl = document.createElement('div');
+		this.contentEl = document.createElement("div");
 	}
 
 	open() {}
@@ -89,7 +90,7 @@ export class Vault {
 	files: Map<string, TFile> = new Map();
 
 	async read(file: TFile): Promise<string> {
-		return '';
+		return "";
 	}
 
 	async modify(file: TFile, data: string): Promise<void> {}
@@ -109,7 +110,9 @@ export class Vault {
 	}
 
 	getMarkdownFiles(): TFile[] {
-		return Array.from(this.files.values()).filter(f => f.extension === 'md');
+		return Array.from(this.files.values()).filter(
+			(f) => f.extension === "md",
+		);
 	}
 
 	getFiles(): TFile[] {
@@ -145,7 +148,7 @@ export class App {
 }
 
 export const normalizePath = (path: string): string => {
-	return path.replace(/\\/g, '/');
+	return path.replace(/\\/g, "/");
 };
 
 export const moment = {

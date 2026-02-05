@@ -1,10 +1,10 @@
 import { App, Notice, TFile, normalizePath } from "obsidian";
 import {
-  TaskInfo,
-  TaskCreationData,
-  EVENT_TASK_UPDATED,
-  EVENT_TASK_CREATED,
-  EVENT_TASK_DELETED,
+	TaskInfo,
+	TaskCreationData,
+	EVENT_TASK_UPDATED,
+	EVENT_TASK_CREATED,
+	EVENT_TASK_DELETED,
 } from "../types";
 import LightweightTasksPlugin from "../main";
 import { TaskManager } from "../utils/TaskManager";
@@ -14,285 +14,298 @@ import { stringify as stringifyYaml, parse as parseYaml } from "yaml";
  * TaskService: Task CRUD operations and file management
  */
 export class TaskService {
-  private app: App;
-  private plugin: LightweightTasksPlugin;
-  private taskManager: TaskManager;
+	private app: App;
+	private plugin: LightweightTasksPlugin;
+	private taskManager: TaskManager;
 
-  private readonly WINDOWS_RESERVED_NAMES = [
-    "CON",
-    "PRN",
-    "AUX",
-    "NUL",
-    "COM1",
-    "COM2",
-    "COM3",
-    "COM4",
-    "COM5",
-    "COM6",
-    "COM7",
-    "COM8",
-    "COM9",
-    "LPT1",
-    "LPT2",
-    "LPT3",
-    "LPT4",
-    "LPT5",
-    "LPT6",
-    "LPT7",
-    "LPT8",
-    "LPT9",
-  ];
+	private readonly WINDOWS_RESERVED_NAMES = [
+		"CON",
+		"PRN",
+		"AUX",
+		"NUL",
+		"COM1",
+		"COM2",
+		"COM3",
+		"COM4",
+		"COM5",
+		"COM6",
+		"COM7",
+		"COM8",
+		"COM9",
+		"LPT1",
+		"LPT2",
+		"LPT3",
+		"LPT4",
+		"LPT5",
+		"LPT6",
+		"LPT7",
+		"LPT8",
+		"LPT9",
+	];
 
-  constructor(
-    app: App,
-    plugin: LightweightTasksPlugin,
-    taskManager: TaskManager,
-  ) {
-    this.app = app;
-    this.plugin = plugin;
-    this.taskManager = taskManager;
-  }
+	constructor(
+		app: App,
+		plugin: LightweightTasksPlugin,
+		taskManager: TaskManager,
+	) {
+		this.app = app;
+		this.plugin = plugin;
+		this.taskManager = taskManager;
+	}
 
-  async createTask(data: TaskCreationData): Promise<TFile> {
-    try {
-      const sanitizedTitle = this.sanitizeTitle(data.title || "Untitled Task");
-      const folder = this.plugin.settings.taskFolder;
-      const filename = this.generateUniqueFilename(sanitizedTitle, folder);
-      const path = normalizePath(`${folder}/${filename}.md`);
+	async createTask(data: TaskCreationData): Promise<TFile> {
+		try {
+			const sanitizedTitle = this.sanitizeTitle(
+				data.title || "Untitled Task",
+			);
+			const folder = this.plugin.settings.taskFolder;
+			const filename = this.generateUniqueFilename(
+				sanitizedTitle,
+				folder,
+			);
+			const path = normalizePath(`${folder}/${filename}.md`);
 
-      await this.ensureFolderExists(folder);
+			await this.ensureFolderExists(folder);
 
-      const frontmatter = this.buildFrontmatter(data);
-      const body = data.bodyContent || sanitizedTitle;
-      const content = this.buildFileContent(frontmatter, body);
+			const frontmatter = this.buildFrontmatter(data);
+			const body = data.bodyContent || sanitizedTitle;
+			const content = this.buildFileContent(frontmatter, body);
 
-      const file = await this.app.vault.create(path, content);
+			const file = await this.app.vault.create(path, content);
 
-      this.app.workspace.trigger(EVENT_TASK_CREATED, {
-        file,
-        task: this.taskManager.getTaskInfo(file.path),
-      });
+			this.app.workspace.trigger(EVENT_TASK_CREATED, {
+				file,
+				task: this.taskManager.getTaskInfo(file.path),
+			});
 
-      return file;
-    } catch (error) {
-      console.error("Task creation failed:", {
-        error,
-        data,
-        stack: (error as Error).stack,
-      });
-      new Notice(
-        `Failed to create task: ${data.title || "Untitled Task"}`,
-        5000,
-      );
-      throw error;
-    }
-  }
+			return file;
+		} catch (error) {
+			console.error("Task creation failed:", {
+				error,
+				data,
+				stack: (error as Error).stack,
+			});
+			new Notice(
+				`Failed to create task: ${data.title || "Untitled Task"}`,
+				5000,
+			);
+			throw error;
+		}
+	}
 
-  async updateTask(path: string, updates: Partial<TaskInfo>): Promise<void> {
-    try {
-      const file = this.app.vault.getAbstractFileByPath(path);
-      if (!(file instanceof TFile)) {
-        throw new Error(`File not found: ${path}`);
-      }
+	async updateTask(path: string, updates: Partial<TaskInfo>): Promise<void> {
+		try {
+			const file = this.app.vault.getAbstractFileByPath(path);
+			if (!(file instanceof TFile)) {
+				throw new Error(`File not found: ${path}`);
+			}
 
-      const content = await this.app.vault.read(file);
-      const { frontmatter, body } = this.parseFrontmatter(content);
+			const content = await this.app.vault.read(file);
+			const { frontmatter, body } = this.parseFrontmatter(content);
 
-      const propNames = this.plugin.settings.propertyNames;
+			const propNames = this.plugin.settings.propertyNames;
 
-      if (updates.complete !== undefined) {
-        frontmatter[propNames.status] = updates.complete;
+			if (updates.complete !== undefined) {
+				frontmatter[propNames.status] = updates.complete;
 
-        // Auto-update completion date when status changes
-        if (updates.complete === true) {
-          // Task being marked complete - set completion date to today
-          frontmatter[propNames.completed] = this.formatDateForFrontmatter(new Date());
-        } else if (updates.complete === false) {
-          // Task being marked incomplete - clear completion date
-          frontmatter[propNames.completed] = null;
-        }
-      }
-      if (updates.due !== undefined) {
-        frontmatter[propNames.due] = updates.due;
-      }
-      if (updates.projects !== undefined) {
-        frontmatter[propNames.projects] = updates.projects;
-      }
-      if (updates.tags !== undefined) {
-        const tags = Array.isArray(updates.tags) ? updates.tags : ["task"];
-        if (!tags.includes("task")) {
-          tags.push("task");
-        }
-        frontmatter[propNames.tags] = tags;
-      }
-      if (updates.statusDescription !== undefined) {
-        frontmatter[propNames.statusDescription] = updates.statusDescription;
-      }
+				// Auto-update completion date when status changes
+				if (updates.complete === true) {
+					// Task being marked complete - set completion date to today
+					frontmatter[propNames.completed] =
+						this.formatDateForFrontmatter(new Date());
+				} else if (updates.complete === false) {
+					// Task being marked incomplete - clear completion date
+					frontmatter[propNames.completed] = null;
+				}
+			}
+			if (updates.due !== undefined) {
+				frontmatter[propNames.due] = updates.due;
+			}
+			if (updates.projects !== undefined) {
+				frontmatter[propNames.projects] = updates.projects;
+			}
+			if (updates.people !== undefined) {
+				frontmatter[propNames.people] = updates.people;
+			}
+			if (updates.tags !== undefined) {
+				const tags = Array.isArray(updates.tags)
+					? updates.tags
+					: ["task"];
+				if (!tags.includes("task")) {
+					tags.push("task");
+				}
+				frontmatter[propNames.tags] = tags;
+			}
+			if (updates.statusDescription !== undefined) {
+				frontmatter[propNames.statusDescription] =
+					updates.statusDescription;
+			}
 
-      const newContent = this.buildFileContent(frontmatter, body);
-      await this.app.vault.modify(file, newContent);
+			const newContent = this.buildFileContent(frontmatter, body);
+			await this.app.vault.modify(file, newContent);
 
-      this.app.workspace.trigger(EVENT_TASK_UPDATED, {
-        file,
-        task: this.taskManager.getTaskInfo(file.path),
-        changes: updates,
-      });
-    } catch (error) {
-      console.error("Task update failed:", {
-        error,
-        path,
-        updates,
-        stack: (error as Error).stack,
-      });
-      new Notice(`Failed to update task at: ${path}`, 5000);
-      throw error;
-    }
-  }
+			this.app.workspace.trigger(EVENT_TASK_UPDATED, {
+				file,
+				task: this.taskManager.getTaskInfo(file.path),
+				changes: updates,
+			});
+		} catch (error) {
+			console.error("Task update failed:", {
+				error,
+				path,
+				updates,
+				stack: (error as Error).stack,
+			});
+			new Notice(`Failed to update task at: ${path}`, 5000);
+			throw error;
+		}
+	}
 
-  async updateTaskStatus(path: string, complete: boolean): Promise<void> {
-    await this.updateTask(path, { complete });
-  }
+	async updateTaskStatus(path: string, complete: boolean): Promise<void> {
+		await this.updateTask(path, { complete });
+	}
 
-  async updateTaskProjects(path: string, projects: string[]): Promise<void> {
-    await this.updateTask(path, { projects });
-  }
+	async updateTaskProjects(path: string, projects: string[]): Promise<void> {
+		await this.updateTask(path, { projects });
+	}
 
-  async updateTaskDueDate(path: string, due: string | null): Promise<void> {
-    await this.updateTask(path, { due });
-  }
+	async updateTaskDueDate(path: string, due: string | null): Promise<void> {
+		await this.updateTask(path, { due });
+	}
 
-  async deleteTask(path: string): Promise<void> {
-    try {
-      const file = this.app.vault.getAbstractFileByPath(path);
-      if (!(file instanceof TFile)) {
-        throw new Error(`File not found: ${path}`);
-      }
+	async deleteTask(path: string): Promise<void> {
+		try {
+			const file = this.app.vault.getAbstractFileByPath(path);
+			if (!(file instanceof TFile)) {
+				throw new Error(`File not found: ${path}`);
+			}
 
-      const task = this.taskManager.getTaskInfo(path);
-      await this.app.vault.delete(file);
+			const task = this.taskManager.getTaskInfo(path);
+			await this.app.vault.delete(file);
 
-      this.app.workspace.trigger(EVENT_TASK_DELETED, {
-        path,
-        task,
-      });
-    } catch (error) {
-      console.error("Task deletion failed:", {
-        error,
-        path,
-        stack: (error as Error).stack,
-      });
-      new Notice(`Failed to delete task at: ${path}`, 5000);
-      throw error;
-    }
-  }
+			this.app.workspace.trigger(EVENT_TASK_DELETED, {
+				path,
+				task,
+			});
+		} catch (error) {
+			console.error("Task deletion failed:", {
+				error,
+				path,
+				stack: (error as Error).stack,
+			});
+			new Notice(`Failed to delete task at: ${path}`, 5000);
+			throw error;
+		}
+	}
 
-  sanitizeTitle(title: string): string {
-    let sanitized = title
-      .trim()
-      .replace(/[\[\]#\^\|]/g, "-")
-      .replace(/[*"\\/<>:]/g, "-")
-      .replace(/\?/g, "")
-      .replace(/\s+/g, " ")
-      .replace(/^\.+|\.+$/g, "");
+	sanitizeTitle(title: string): string {
+		let sanitized = title
+			.trim()
+			.replace(/[[\]#^|]/g, "-")
+			.replace(/[*"\\/<>:]/g, "-")
+			.replace(/\?/g, "")
+			.replace(/\s+/g, " ")
+			.replace(/^\.+|\.+$/g, "");
 
-    if (!sanitized) {
-      return "Untitled Task";
-    }
+		if (!sanitized) {
+			return "Untitled Task";
+		}
 
-    const upperName = sanitized.toUpperCase();
-    if (this.WINDOWS_RESERVED_NAMES.includes(upperName)) {
-      sanitized = `${sanitized}_`;
-    }
+		const upperName = sanitized.toUpperCase();
+		if (this.WINDOWS_RESERVED_NAMES.includes(upperName)) {
+			sanitized = `${sanitized}_`;
+		}
 
-    if (sanitized.length > 200) {
-      sanitized = sanitized.slice(0, 200);
-    }
+		if (sanitized.length > 200) {
+			sanitized = sanitized.slice(0, 200);
+		}
 
-    return sanitized;
-  }
+		return sanitized;
+	}
 
-  generateUniqueFilename(title: string, folder: string): string {
-    let filename = title;
-    let counter = 1;
+	generateUniqueFilename(title: string, folder: string): string {
+		let filename = title;
+		let counter = 1;
 
-    while (
-      this.app.vault.getAbstractFileByPath(
-        normalizePath(`${folder}/${filename}.md`),
-      )
-    ) {
-      filename = `${title} ${counter}`;
-      counter++;
-    }
+		while (
+			this.app.vault.getAbstractFileByPath(
+				normalizePath(`${folder}/${filename}.md`),
+			)
+		) {
+			filename = `${title} ${counter}`;
+			counter++;
+		}
 
-    return filename;
-  }
+		return filename;
+	}
 
-  private buildFrontmatter(data: TaskCreationData): Record<string, any> {
-    const tags = data.tags || [...this.plugin.settings.defaultTags];
-    if (!tags.includes("task")) {
-      tags.push("task");
-    }
+	private buildFrontmatter(data: TaskCreationData): Record<string, any> {
+		const tags = data.tags || [...this.plugin.settings.defaultTags];
+		if (!tags.includes("task")) {
+			tags.push("task");
+		}
 
-    const propNames = this.plugin.settings.propertyNames;
-    return {
-      [propNames.status]: data.complete || false,
-      [propNames.due]: data.due || null,
-      [propNames.completed]: data.completed || null,
-      [propNames.projects]: data.projects || [],
-      [propNames.tags]: tags,
-      [propNames.statusDescription]: data.statusDescription || "",
-    };
-  }
+		const propNames = this.plugin.settings.propertyNames;
+		return {
+			[propNames.status]: data.complete || false,
+			[propNames.due]: data.due || null,
+			[propNames.completed]: data.completed || null,
+			[propNames.projects]: data.projects || [],
+			[propNames.people]: data.people || [],
+			[propNames.tags]: tags,
+			[propNames.statusDescription]: data.statusDescription || "",
+		};
+	}
 
-  private buildFileContent(
-    frontmatter: Record<string, any>,
-    body: string,
-  ): string {
-    const yaml = stringifyYaml(frontmatter);
-    return `---\n${yaml}---\n\n${body}`;
-  }
+	private buildFileContent(
+		frontmatter: Record<string, any>,
+		body: string,
+	): string {
+		const yaml = stringifyYaml(frontmatter);
+		return `---\n${yaml}---\n\n${body}`;
+	}
 
-  private parseFrontmatter(content: string): {
-    frontmatter: Record<string, any>;
-    body: string;
-  } {
-    const frontmatterRegex = /^---\n([\s\S]*?)\n---\n\n?([\s\S]*)$/;
-    const match = content.match(frontmatterRegex);
+	private parseFrontmatter(content: string): {
+		frontmatter: Record<string, any>;
+		body: string;
+	} {
+		const frontmatterRegex = /^---\n([\s\S]*?)\n---\n\n?([\s\S]*)$/;
+		const match = content.match(frontmatterRegex);
 
-    if (match) {
-      try {
-        const frontmatter = parseYaml(match[1]);
-        return {
-          frontmatter: frontmatter || {},
-          body: match[2] || "",
-        };
-      } catch (error) {
-        console.error("Failed to parse frontmatter:", error);
-      }
-    }
+		if (match) {
+			try {
+				const frontmatter = parseYaml(match[1]);
+				return {
+					frontmatter: frontmatter || {},
+					body: match[2] || "",
+				};
+			} catch (error) {
+				console.error("Failed to parse frontmatter:", error);
+			}
+		}
 
-    return {
-      frontmatter: {},
-      body: content,
-    };
-  }
+		return {
+			frontmatter: {},
+			body: content,
+		};
+	}
 
-  private async ensureFolderExists(folderPath: string): Promise<void> {
-    const normalizedPath = normalizePath(folderPath);
-    const folder = this.app.vault.getAbstractFileByPath(normalizedPath);
+	private async ensureFolderExists(folderPath: string): Promise<void> {
+		const normalizedPath = normalizePath(folderPath);
+		const folder = this.app.vault.getAbstractFileByPath(normalizedPath);
 
-    if (!folder) {
-      await this.app.vault.createFolder(normalizedPath);
-    }
-  }
+		if (!folder) {
+			await this.app.vault.createFolder(normalizedPath);
+		}
+	}
 
-  /**
-   * Format Date object to YYYY-MM-DD string for frontmatter
-   */
-  private formatDateForFrontmatter(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  }
+	/**
+	 * Format Date object to YYYY-MM-DD string for frontmatter
+	 */
+	private formatDateForFrontmatter(date: Date): string {
+		const year = date.getFullYear();
+		const month = String(date.getMonth() + 1).padStart(2, "0");
+		const day = String(date.getDate()).padStart(2, "0");
+		return `${year}-${month}-${day}`;
+	}
 }

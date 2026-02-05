@@ -1,6 +1,6 @@
-import { AbstractInputSuggest, App } from 'obsidian';
-import type LightweightTasksPlugin from '../main';
-import type { ProjectDiscoveryService } from '../services/ProjectDiscoveryService';
+import { AbstractInputSuggest, App } from "obsidian";
+import type LightweightTasksPlugin from "../main";
+import type { ProjectDiscoveryService } from "../services/ProjectDiscoveryService";
 
 /**
  * Inline autocomplete for project selection as user types
@@ -19,10 +19,11 @@ export class ProjectInputSuggest extends AbstractInputSuggest<string> {
 		app: App,
 		inputEl: HTMLInputElement,
 		plugin: LightweightTasksPlugin,
-		onSelectCallback: (project: string) => void
+		onSelectCallback: (project: string) => void,
 	) {
 		super(app, inputEl);
-		this.projectDiscovery = plugin.container.get<ProjectDiscoveryService>('projectDiscovery');
+		this.projectDiscovery =
+			plugin.container.get<ProjectDiscoveryService>("projectDiscovery");
 		this.onSelectCallback = onSelectCallback;
 	}
 
@@ -34,14 +35,14 @@ export class ProjectInputSuggest extends AbstractInputSuggest<string> {
 	getSuggestions(inputStr: string): string[] {
 		const allProjects = this.projectDiscovery.getAvailableProjects();
 
-		if (!inputStr || inputStr.trim() === '') {
+		if (!inputStr || inputStr.trim() === "") {
 			return allProjects; // Show all if empty
 		}
 
 		// Filter by typed characters (case-insensitive contains match)
 		const lower = inputStr.toLowerCase();
-		return allProjects.filter(project =>
-			project.toLowerCase().includes(lower)
+		return allProjects.filter((project) =>
+			project.toLowerCase().includes(lower),
 		);
 	}
 
@@ -59,7 +60,7 @@ export class ProjectInputSuggest extends AbstractInputSuggest<string> {
 	 * @param project - Selected project name
 	 * @param evt - Mouse or keyboard event
 	 */
-	selectSuggestion(project: string, evt: MouseEvent | KeyboardEvent): void {
+	selectSuggestion(project: string, _evt: MouseEvent | KeyboardEvent): void {
 		this.onSelectCallback(project);
 		this.close();
 	}

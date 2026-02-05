@@ -1,4 +1,4 @@
-import { Notice } from 'obsidian';
+import { Notice } from "obsidian";
 
 /**
  * Service for parsing natural language date expressions.
@@ -6,14 +6,15 @@ import { Notice } from 'obsidian';
  * Falls back to strict YYYY-MM-DD parsing if chrono is unavailable.
  */
 export class NaturalLanguageParser {
-	private chronoPromise: Promise<typeof import('chrono-node') | null> | null = null;
+	private chronoPromise: Promise<typeof import("chrono-node") | null> | null =
+		null;
 	private chronoLoadFailed = false;
 
 	/**
 	 * Lazy-load chrono-node library.
 	 * @returns Promise resolving to chrono-node module
 	 */
-	private async getChrono(): Promise<typeof import('chrono-node') | null> {
+	private async getChrono(): Promise<typeof import("chrono-node") | null> {
 		// Return null if previous load failed
 		if (this.chronoLoadFailed) {
 			return null;
@@ -25,10 +26,10 @@ export class NaturalLanguageParser {
 		}
 
 		// Start loading chrono-node
-		this.chronoPromise = import('chrono-node').catch((error) => {
-			console.error('Failed to load chrono-node:', error);
+		this.chronoPromise = import("chrono-node").catch((error) => {
+			console.error("Failed to load chrono-node:", error);
 			this.chronoLoadFailed = true;
-			new Notice('Natural language date parsing unavailable');
+			new Notice("Natural language date parsing unavailable");
 			return null;
 		});
 
@@ -43,7 +44,7 @@ export class NaturalLanguageParser {
 	 * @returns Promise resolving to Date or null if parsing fails
 	 */
 	async parseDate(input: string): Promise<Date | null> {
-		if (!input || input.trim() === '') {
+		if (!input || input.trim() === "") {
 			return null;
 		}
 
@@ -61,7 +62,7 @@ export class NaturalLanguageParser {
 					return result;
 				}
 			} catch (error) {
-				console.error('Chrono parsing error:', error);
+				console.error("Chrono parsing error:", error);
 			}
 		}
 
@@ -87,7 +88,7 @@ export class NaturalLanguageParser {
 		const date = new Date(
 			parseInt(year, 10),
 			parseInt(month, 10) - 1, // Month is 0-indexed
-			parseInt(day, 10)
+			parseInt(day, 10),
 		);
 
 		// Validate the date is valid (e.g., not Feb 31)
@@ -112,18 +113,18 @@ export class NaturalLanguageParser {
 	async formatDatePreview(input: string): Promise<string> {
 		const date = await this.parseDate(input);
 		if (!date) {
-			return '';
+			return "";
 		}
 
 		// Format as "EEE, MMM d, yyyy" (e.g., "Fri, Nov 8, 2025")
 		const options: Intl.DateTimeFormatOptions = {
-			weekday: 'short',
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric',
+			weekday: "short",
+			year: "numeric",
+			month: "short",
+			day: "numeric",
 		};
 
-		const formatted = date.toLocaleDateString('en-US', options);
+		const formatted = date.toLocaleDateString("en-US", options);
 		return `📅 ${formatted}`;
 	}
 
@@ -135,8 +136,8 @@ export class NaturalLanguageParser {
 	 */
 	formatDateForFrontmatter(date: Date): string {
 		const year = date.getFullYear();
-		const month = String(date.getMonth() + 1).padStart(2, '0');
-		const day = String(date.getDate()).padStart(2, '0');
+		const month = String(date.getMonth() + 1).padStart(2, "0");
+		const day = String(date.getDate()).padStart(2, "0");
 		return `${year}-${month}-${day}`;
 	}
 
