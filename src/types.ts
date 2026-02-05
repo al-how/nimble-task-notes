@@ -106,9 +106,6 @@ export interface LightweightTasksSettings {
 	/** Enable natural language date parsing */
 	enableNaturalLanguageDates: boolean;
 
-	/** Show convert button at end of checkbox lines */
-	showConvertButton: boolean;
-
 	/** Enable HTTP API for MCP integration */
 	enableHTTPAPI: boolean;
 

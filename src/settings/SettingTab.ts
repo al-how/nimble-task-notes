@@ -15,10 +15,16 @@ export class LightweightTasksSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		containerEl.createEl("h2", {
-			text: "Lightweight Task Manager Settings",
+			text: "Nimble Task Notes Settings",
 		});
 
-		// Task Folder
+		// Folder Configuration
+		containerEl.createEl("h3", { text: "Folder Configuration" });
+		containerEl.createEl("p", {
+			text: "Configure where different types of files are stored and found.",
+			cls: "setting-item-description",
+		});
+
 		new Setting(containerEl)
 			.setName("Task folder")
 			.setDesc("Folder where task notes will be created")
@@ -32,7 +38,6 @@ export class LightweightTasksSettingTab extends PluginSettingTab {
 					}),
 			);
 
-		// Meeting Folder
 		new Setting(containerEl)
 			.setName("Meeting folder")
 			.setDesc("Folder where meeting notes will be created")
@@ -46,12 +51,44 @@ export class LightweightTasksSettingTab extends PluginSettingTab {
 					}),
 			);
 
-		// Calendar Integration
-		containerEl.createEl("h3", { text: "Calendar Integration" });
+		new Setting(containerEl)
+			.setName("Projects source folder")
+			.setDesc(
+				"Folder containing project files (leave empty for vault root)",
+			)
+			.addText((text) => {
+				text.setPlaceholder("e.g., Work/01-Projects")
+					.setValue(this.plugin.settings.projectsSourceFolder)
+					.onChange(async (value) => {
+						this.plugin.settings.projectsSourceFolder = value;
+						await this.plugin.saveSettings();
+					});
+			});
 
 		new Setting(containerEl)
-			.setName("Outlook calendar URL")
-			.setDesc("ICS feed URL from Outlook calendar")
+			.setName("People source folder")
+			.setDesc(
+				"Folder containing people files (leave empty for vault root)",
+			)
+			.addText((text) => {
+				text.setPlaceholder("e.g., People")
+					.setValue(this.plugin.settings.peopleSourceFolder)
+					.onChange(async (value) => {
+						this.plugin.settings.peopleSourceFolder = value;
+						await this.plugin.saveSettings();
+					});
+			});
+
+		// Calendar Integration
+		containerEl.createEl("h3", { text: "Calendar Integration" });
+		containerEl.createEl("p", {
+			text: "Connect to external calendars via ICS feeds.",
+			cls: "setting-item-description",
+		});
+
+		new Setting(containerEl)
+			.setName("Calendar ICS URL")
+			.setDesc("ICS feed URL from your calendar provider")
 			.addText((text) =>
 				text
 					.setPlaceholder(
@@ -66,6 +103,10 @@ export class LightweightTasksSettingTab extends PluginSettingTab {
 
 		// Property Configuration
 		containerEl.createEl("h3", { text: "Property Configuration" });
+		containerEl.createEl("p", {
+			text: "Customize frontmatter property names used by this plugin.",
+			cls: "setting-item-description",
+		});
 
 		new Setting(containerEl)
 			.setName("Status property name")
@@ -200,6 +241,10 @@ export class LightweightTasksSettingTab extends PluginSettingTab {
 
 		// Task Creation
 		containerEl.createEl("h3", { text: "Task Creation" });
+		containerEl.createEl("p", {
+			text: "Options for creating new tasks.",
+			cls: "setting-item-description",
+		});
 
 		new Setting(containerEl)
 			.setName("Natural language dates")
@@ -211,18 +256,6 @@ export class LightweightTasksSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.enableNaturalLanguageDates)
 					.onChange(async (value) => {
 						this.plugin.settings.enableNaturalLanguageDates = value;
-						await this.plugin.saveSettings();
-					}),
-			);
-
-		new Setting(containerEl)
-			.setName("Show convert button")
-			.setDesc("Show button at end of checkbox lines to convert to task")
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.showConvertButton)
-					.onChange(async (value) => {
-						this.plugin.settings.showConvertButton = value;
 						await this.plugin.saveSettings();
 					}),
 			);
@@ -252,20 +285,10 @@ export class LightweightTasksSettingTab extends PluginSettingTab {
 
 		// Project Suggestions
 		containerEl.createEl("h3", { text: "Project Suggestions" });
-
-		new Setting(containerEl)
-			.setName("Projects source folder")
-			.setDesc(
-				"Folder containing project files (leave empty for vault root)",
-			)
-			.addText((text) => {
-				text.setPlaceholder("e.g., Work/01-Projects")
-					.setValue(this.plugin.settings.projectsSourceFolder)
-					.onChange(async (value) => {
-						this.plugin.settings.projectsSourceFolder = value;
-						await this.plugin.saveSettings();
-					});
-			});
+		containerEl.createEl("p", {
+			text: "Configure how project suggestions are discovered.",
+			cls: "setting-item-description",
+		});
 
 		new Setting(containerEl)
 			.setName("Projects tag")
@@ -314,20 +337,10 @@ export class LightweightTasksSettingTab extends PluginSettingTab {
 
 		// People Suggestions
 		containerEl.createEl("h3", { text: "People Suggestions" });
-
-		new Setting(containerEl)
-			.setName("People source folder")
-			.setDesc(
-				"Folder containing people files (leave empty for vault root)",
-			)
-			.addText((text) => {
-				text.setPlaceholder("e.g., People")
-					.setValue(this.plugin.settings.peopleSourceFolder)
-					.onChange(async (value) => {
-						this.plugin.settings.peopleSourceFolder = value;
-						await this.plugin.saveSettings();
-					});
-			});
+		containerEl.createEl("p", {
+			text: "Configure how people suggestions are discovered.",
+			cls: "setting-item-description",
+		});
 
 		new Setting(containerEl)
 			.setName("People tag")
@@ -373,7 +386,11 @@ export class LightweightTasksSettingTab extends PluginSettingTab {
 			});
 
 		// HTTP API (MCP Integration)
-		containerEl.createEl("h3", { text: "HTTP API (for MCP Integration)" });
+		containerEl.createEl("h3", { text: "HTTP API (MCP Integration)" });
+		containerEl.createEl("p", {
+			text: "Enable external access for MCP integration.",
+			cls: "setting-item-description",
+		});
 
 		new Setting(containerEl)
 			.setName("Enable HTTP API")

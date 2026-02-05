@@ -6,7 +6,6 @@ export const DEFAULT_SETTINGS: LightweightTasksSettings = {
 	calendarURL: "",
 	defaultTags: ["task"],
 	enableNaturalLanguageDates: true,
-	showConvertButton: true,
 	enableHTTPAPI: false,
 	apiPort: 27124,
 	apiKey: "",
