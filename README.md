@@ -182,7 +182,6 @@ Access plugin settings via Settings → Nimble Task Notes:
 #### Calendar Settings
 - **ICS Subscription URL**: Your Outlook calendar ICS feed URL
 - **Refresh Interval**: How often to fetch calendar updates (default: 15 minutes)
-- **Meeting Folder**: Where to store meeting note files
 
 #### Task Settings
 - **Task Folder**: Where to create task files (default: `Tasks/`)

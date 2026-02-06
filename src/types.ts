@@ -94,9 +94,6 @@ export interface LightweightTasksSettings {
 	/** Folder path for task notes */
 	taskFolder: string;
 
-	/** Folder path for meeting notes */
-	meetingFolder: string;
-
 	/** Outlook calendar ICS feed URL */
 	calendarURL: string;
 

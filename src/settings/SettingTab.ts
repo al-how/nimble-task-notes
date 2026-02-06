@@ -39,19 +39,6 @@ export class LightweightTasksSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Meeting folder")
-			.setDesc("Folder where meeting notes will be created")
-			.addText((text) =>
-				text
-					.setPlaceholder("Meetings")
-					.setValue(this.plugin.settings.meetingFolder)
-					.onChange(async (value) => {
-						this.plugin.settings.meetingFolder = value;
-						await this.plugin.saveSettings();
-					}),
-			);
-
-		new Setting(containerEl)
 			.setName("Projects source folder")
 			.setDesc(
 				"Folder containing project files (leave empty for vault root)",
